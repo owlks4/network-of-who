@@ -3,6 +3,15 @@ from lxml import html
 from io import BytesIO
 import time
 import json
+import os
+
+FOREVER_BLACKLIST = ["", "captain", "lieutenant", "dalek_operator", "colonel", "commander", "trap_street"]
+
+OUTPUT_PATH = "charmap.json"
+
+if os.path.isfile(OUTPUT_PATH):
+    print(OUTPUT_PATH + " already exists. If you really do want to regenerate it, please delete it first, then run this script again. Aborting for now.")
+    exit()
 
 def parse_cast_list(episode):
     response = requests.get(ROOT_URL + episode)
@@ -38,7 +47,7 @@ def parse_cast_list(episode):
                 for tag in anchortag_parent:
                     if tag.tag == "a":
                         link = tag.attrib.get("href").split("/wiki/")[-1]
-                        if not "redlink" in link and not "stunt_double" in link.lower():
+                        if not "redlink" in link and not "stunt_double" in link.lower() and not link.lower() in FOREVER_BLACKLIST:
                             character_links.append(link.split("/")[0].split("#")[0])
                     if not tag.tail == None and (" - " in tag.tail or "—" in tag.tail):
                         break
@@ -54,6 +63,7 @@ episode_charmaps = []
 characters = []
 
 def process_characters(cast, episode_id):
+    print(cast)
     output = []
     for i in range(len(cast)):
         char = cast[i]
@@ -74,7 +84,7 @@ def process_characters(cast, episode_id):
 
 for episode in episode_links:
     cast = parse_cast_list(episode)
-    print(cast)
     episode_charmaps.append({"episode":episode, "chars":process_characters(list(dict.fromkeys(cast)), episode_links.index(episode))}) #the list(dict.fromkeys()) part is there to remove duplicates in the list (e.g. if a character is repeated twice in the same cast list for whatever reason (e.g. two daleks) we only need to record one instance)
     time.sleep(1)
-    open("charmap.json", mode="w+", encoding="utf-8").write(json.dumps({"episodes":episode_charmaps, "characters":characters}))
+
+open(OUTPUT_PATH, mode="w+", encoding="utf-8").write(json.dumps({"episodes":episode_charmaps, "characters":characters}))

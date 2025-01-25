@@ -1,0 +1,4 @@
+python 1_get_episodes.py
+python 2_generate_character_appearance_maps.py
+python 3_find_connection.py
+pause

@@ -2,6 +2,7 @@ import requests
 from lxml import html
 from io import BytesIO
 import time
+import os
 
 def parse_season_page(link):
     response = requests.get(link)
@@ -18,9 +19,15 @@ def parse_season_page(link):
                         episode_link = first_anchortag.attrib.get("href")
                         episode_links_output.append(episode_link)
 
+OUTPUT_PATH = "episodes.txt"
+
+if os.path.isfile(OUTPUT_PATH):
+    print(OUTPUT_PATH + " already exists. If you really do want to regenerate it, please delete it first, then run this script again. Aborting for now.")
+    exit()
+
 ROOT_URL = "https://mirror.tardis.wiki/wiki/"
 
-season_links = []
+season_links = [ROOT_URL + "50th_Anniversary_Specials"]
 
 episode_links_output = ["Doctor_Who_(TV_story)"]
 
@@ -38,7 +45,7 @@ for link in season_links:
     parse_season_page(link)
     time.sleep(1)
 
-output = open("episodes.txt", mode="w+", encoding="utf-8")
+output = open(OUTPUT_PATH, mode="w+", encoding="utf-8")
 
 for episode_link in episode_links_output:
     output.write(episode_link.split("/wiki/")[-1]+"\n")
