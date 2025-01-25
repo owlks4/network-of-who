@@ -1,8 +1,8 @@
 import json
-from urllib.parse import unquote
+from urllib.parse import unquote, quote
 from random import randint
 
-blacklist = []#"Dalek","Daleks","Cyberman","Cybermen","First_Doctor","Second_Doctor","Third_Doctor","Fourth_Doctor","Fifth_Doctor","Sixth_Doctor","Seventh_Doctor","Eighth_Doctor","War_Doctor","Ninth_Doctor","Tenth_Doctor","Eleventh_Doctor","Twelfth_Doctor","Thirteenth_Doctor","Fugitive_Doctor","Fourteenth_Doctor","Fifteenth_Doctor"]
+blacklist = ["Dalek","Daleks","Cyberman","Cybermen","Cyber-Leader","Judoon","Slitheen","Zygon","Ice Warrior","First_Doctor","Second_Doctor","Third_Doctor","Fourth_Doctor","Fifth_Doctor","Sixth_Doctor","Seventh_Doctor","Eighth_Doctor","War_Doctor","Ninth_Doctor","Tenth_Doctor","Eleventh_Doctor","Twelfth_Doctor","Thirteenth_Doctor","Fugitive_Doctor","Fourteenth_Doctor","Fifteenth_Doctor"]
 
 FOREVER_BLACKLIST = [""]
 
@@ -13,7 +13,10 @@ data = json.loads(open("charmap.json", mode="r", encoding="utf-8").read())
 episodes = data["episodes"]
 characters = data["characters"]
 
+verbose = False
+
 def get_char_by_name(name):
+    name = quote(name.replace(" ","_"), safe="()")
     for character in characters:
         if character["name"] == name:
             return character
@@ -22,7 +25,33 @@ def get_char_by_name(name):
 def fix_name(input):
     return unquote(input).replace("_"," ")
 
-verbose = False
+def trim_story_url(input):
+    return "'"+input.split("/wiki/")[-1].split("(")[0].strip()+"'"
+
+def print_episodes_for_character(chara):
+    print("\n"+fix_name(chara["name"])+"'s episodes:\n")
+    print(list(map(lambda x : episodes[x]["episode"], chara["episodes"])))
+
+def get_report(connection):
+    return fix_name(characters[connection["start"]]["name"]) +" -> "+ fix_name(characters[connection["end"]]["name"]) + ": "+str(connection["score"])
+
+def get_verbose_report(connection):    
+    path = connection["path"]
+
+    if path == None:
+        return fix_name(characters[connection["start"]]["name"]) + " could not be connected to " + fix_name(characters[connection["end"]]["name"])
+
+    output = fix_name(characters[connection["start"]]["name"]) + " has a "+ fix_name(characters[connection["end"]]["name"]) +" score of " + str(connection["score"]) +".\n\n"
+
+    output += fix_name(characters[connection["start"]]["name"]) +" was in "
+
+    i = 0
+    for point in path:
+        output += trim_story_url(fix_name(episodes[point["ep"]]["episode"])) + " with " + fix_name(characters[point["chr"]]["name"])
+        i += 1
+        if i < len(path):
+            output += ", who was in "
+    return output + "."
 
 def find_connection(start,end):
     complete = False
@@ -67,10 +96,11 @@ def find_connection(start,end):
         #print("Registering nodes linked to them via their episodes...")
 
         for char in chars_to_expand:
-            dijkstra_context[str(char)] = [curdist, node, local_char_to_ep_map[str(char)], False]
-            if char == end:
-                complete = True
-                break
+            if not characters[char]["name"] in blacklist:
+                dijkstra_context[str(char)] = [curdist, node, local_char_to_ep_map[str(char)], False]
+                if char == end:
+                    complete = True
+                    break
 
         if complete:
             break
@@ -113,14 +143,11 @@ def find_connection(start,end):
     while not node[1] == -1:
         p.append({"ep":node[2], "chr":char_id})
         score += 1
-        output = " was in " + fix_name(episodes[node[2]]["episode"]).split("/wiki/")[-1].split("(")[0].strip() + " with " + fix_name(characters[char_id]["name"]) + ("" if first_time else ", who") + output
+        output = " was in " + trim_story_url(fix_name(episodes[node[2]]["episode"])) + " with " + fix_name(characters[char_id]["name"]) + ("" if first_time else ", who") + output
         first_time = False
         char_id = node[1]
         node = dijkstra_context[str(char_id)]
     output = fix_name(characters[start]["name"]) + output
-
-    if verbose:
-        print("\n"+fix_name(characters[start]["name"]) + " has a "+fix_name(characters[end]["name"]) +" score of " + str(score)+":\n"+output+"\n")
 
     return {
         "start":start,
@@ -129,8 +156,8 @@ def find_connection(start,end):
         "path":list(reversed(p))
     }
 
-_START = characters.index(get_char_by_name("Areta"))
-_END = characters.index(get_char_by_name("Christofer_Ibrahim"))
+_START = characters.index(get_char_by_name("Brian Williams_(Dinosaurs_on_a_Spaceship)"))
+_END = characters.index(get_char_by_name("Ruby Sunday"))
 
 def randomise_start_and_end():
     global _START, _END
@@ -140,17 +167,21 @@ def randomise_start_and_end():
 lowest = {"score": 99999}
 highest = {"score": -99999}
 
-for i in range (20000):
-    print(str(i))
+print_episodes_for_character(get_char_by_name("Kate Stewart"))
+
+for i in range (500):
     randomise_start_and_end()
     connection = find_connection(_START,_END)
-    if connection["score"] < lowest["score"]:
+    print("\n")
+    print(get_verbose_report(connection))
+    score = connection["score"] 
+    if score < lowest["score"] and score >= 0:
         lowest = connection
-    if connection["score"] > highest["score"]:
+    if score > highest["score"]:
         highest = connection
 
-def get_report(connection):
-    return characters[connection["start"]]["name"] +" -> "+characters[connection["end"]]["name"] + ": "+str(connection["score"])
-
+print("\nLowest:")
 print(get_report(lowest))
+
+print("\nHighest (not counting infinity):")
 print(get_report(highest))

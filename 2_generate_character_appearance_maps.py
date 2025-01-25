@@ -5,7 +5,7 @@ import time
 import json
 import os
 
-FOREVER_BLACKLIST = ["", "captain", "lieutenant", "dalek_operator", "colonel", "commander", "trap_street"]
+FOREVER_BLACKLIST = ["", "captain", "lieutenant", "dalek_operator", "colonel", "commander", "trap_street", "covent_garden", "william_hartnell","patrick_troughton","jon_pertwee","tom_baker","peter_davison","colin_baker","sylvester_mccoy","paul_mcgann","john_hurt","christopher_eccleston","david_tennant","matt_smith","peter_capaldi","jodie_whittaker","jo_martin","ncuti_gatwa", "gabriel_woolf", "nicholas_briggs"]
 
 OUTPUT_PATH = "charmap.json"
 
@@ -67,6 +67,8 @@ def process_characters(cast, episode_id):
     output = []
     for i in range(len(cast)):
         char = cast[i]
+        if char == "Kate_Lethbridge-Stewart":
+            char = "Kate_Stewart"
         char_lower = char.lower()
         match = None
         for entry in characters:
