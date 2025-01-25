@@ -5,7 +5,7 @@ import time
 import json
 
 def parse_cast_list(episode):
-    response = requests.get(episode)
+    response = requests.get(ROOT_URL + episode)
     character_links = []
     with BytesIO(response.content) as f:
         page = f.read()
@@ -39,15 +39,15 @@ def parse_cast_list(episode):
                     if tag.tag == "a":
                         link = tag.attrib.get("href").split("/wiki/")[-1]
                         if not "redlink" in link and not "stunt_double" in link.lower():
-                            character_links.append(link)
-                    if not tag.tail == None and " - " in tag.tail:
+                            character_links.append(link.split("/")[0].split("#")[0])
+                    if not tag.tail == None and (" - " in tag.tail or "—" in tag.tail):
                         break
                     
     return character_links
 
 ROOT_URL = "https://mirror.tardis.wiki/wiki/"
 
-episode_links = list(map(lambda x : ROOT_URL + x, open("episodes.txt", mode="r", encoding="utf-8").read().replace("\r","").split("\n")))
+episode_links = open("episodes.txt", mode="r", encoding="utf-8").read().replace("\r","").split("\n")
 
 episode_charmaps = []
 
@@ -75,6 +75,6 @@ def process_characters(cast, episode_id):
 for episode in episode_links:
     cast = parse_cast_list(episode)
     print(cast)
-    episode_charmaps.append({"episode":episode, "chars":process_characters(cast, episode_links.index(episode))})
+    episode_charmaps.append({"episode":episode, "chars":process_characters(list(dict.fromkeys(cast)), episode_links.index(episode))}) #the list(dict.fromkeys()) part is there to remove duplicates in the list (e.g. if a character is repeated twice in the same cast list for whatever reason (e.g. two daleks) we only need to record one instance)
     time.sleep(1)
     open("charmap.json", mode="w+", encoding="utf-8").write(json.dumps({"episodes":episode_charmaps, "characters":characters}))
