@@ -3,7 +3,7 @@ from urllib.parse import unquote, quote
 from random import randint
 import os
 
-blacklist = ["Dalek","Daleks","Cyberman","Cybermen","Cyber-Leader","Judoon","Slitheen","Zygon","Ice Warrior","Auton","Weeping Angel","First_Doctor","Second_Doctor","Third_Doctor","Fourth_Doctor","Fifth_Doctor","Sixth_Doctor","Seventh_Doctor","Eighth_Doctor","War_Doctor","Ninth_Doctor","Tenth_Doctor","Eleventh_Doctor","Twelfth_Doctor","Thirteenth_Doctor","Fugitive_Doctor","Fourteenth_Doctor","Fifteenth_Doctor"]
+blacklist = ["Dalek","Daleks","Cyberman","Cybermen","Cyber-Leader","Judoon","Slitheen","Zygon","Ice Warrior","Auton","Weeping Angel"]#,"First_Doctor","Second_Doctor","Third_Doctor","Fourth_Doctor","Fifth_Doctor","Sixth_Doctor","Seventh_Doctor","Eighth_Doctor","War_Doctor","Ninth_Doctor","Tenth_Doctor","Eleventh_Doctor","Twelfth_Doctor","Thirteenth_Doctor","Fugitive_Doctor","Fourteenth_Doctor","Fifteenth_Doctor"]
 
 FOREVER_BLACKLIST = [""]
 
@@ -23,15 +23,27 @@ def get_char_by_name(name):
             return character
     return None
 
+def get_episode_by_name(name):
+    name = fix_name(trim_story_url(name))
+    for episode in episodes:
+        if fix_name(trim_story_url(episode["episode"])) == name:
+            return episode
+    return None
+
 def fix_name(input):
     return unquote(input).replace("_"," ").strip()
 
 def trim_story_url(input):
-    return "'"+input.split("/wiki/")[-1].split("(")[0].strip()+"'"
+    return input.split("/wiki/")[-1].split("(")[0].strip()
 
 def print_episodes_for_character(chara):
     print("\n"+fix_name(chara["name"])+"'s episodes:\n")
     print(list(map(lambda x : episodes[x]["episode"], chara["episodes"])))
+
+def print_characters_for_episode(episode):
+    print("\n"+fix_name(trim_story_url(episode["episode"]))+"'s characters:\n")
+    print(list(map(lambda x : characters[x]["name"], episode["chars"])))
+
 
 def get_report(connection):
     return fix_name(characters[connection["start"]]["name"]) +" -> "+ fix_name(characters[connection["end"]]["name"]) + ": "+str(connection["score"])
@@ -77,6 +89,10 @@ print(list(map(lambda x : characters[x]["name"], unreachable_characters)))
 episodes_and_traversals = {}
 characters_and_traversals = {}
 
+watched_episode = "The End of Time"
+watched_episode_id = episodes.index(get_episode_by_name(watched_episode))
+characters_accessed_when_traversing_the_watched_episode = {}
+
 total_num_connections_completed = 0
 
 def find_connection(start,end):
@@ -93,7 +109,7 @@ def find_connection(start,end):
 
     dijkstra_context[str(start)] = [0,-1,-1, False]
     node = start
-    curdist = -1
+    curdist = 0
 
     if characters[end]["name"] in blacklist:
         print("Intended endpoint '"+characters[end]["name"]+"' was in blacklist; will skip.")
@@ -102,10 +118,10 @@ def find_connection(start,end):
             
             #print("Focal node is "+str(node))
 
-            if curdist == -1:
-                curdist = 0
+            if curdist == 0:
+                curdist = 1
             else:
-                curdist = dijkstra_context[str(dijkstra_context[str(node)][1])][0] + 1
+                curdist = dijkstra_context[str(node)][0] + 1
 
             chars_to_expand = []
 
@@ -172,22 +188,31 @@ def find_connection(start,end):
     p = []
 
     while not node[1] == -1:
-        p.append({"ep":node[2], "chr":char_id})
-
+        ep_id = node[2]
+        
         #just some housekeeping to track statistics:
-        if node[2] in episodes_and_traversals:
-            episodes_and_traversals[node[2]] += 1
+        if ep_id in episodes_and_traversals:
+            episodes_and_traversals[ep_id] += 1
         else:
-            episodes_and_traversals[node[2]] = 1
+            episodes_and_traversals[ep_id] = 1
 
         if char_id in characters_and_traversals:
             characters_and_traversals[char_id] += 1
         else:
             characters_and_traversals[char_id] = 1
 
+        if str(watched_episode_id) == str(ep_id):
+            if str(char_id) in characters_accessed_when_traversing_the_watched_episode.keys():
+                characters_accessed_when_traversing_the_watched_episode[str(char_id)] += 1
+            else:
+                characters_accessed_when_traversing_the_watched_episode[str(char_id)] = 1
+
         #now back to the actual path construction for this node:
+
+        p.append({"ep":ep_id, "chr":char_id})
+
         score += 1
-        output = " was in " + trim_story_url(fix_name(episodes[node[2]]["episode"])) + " with " + fix_name(characters[char_id]["name"]) + ("" if first_time else ", who") + output
+        output = " was in " + trim_story_url(fix_name(episodes[ep_id]["episode"])) + " with " + fix_name(characters[char_id]["name"]) + ("" if first_time else ", who") + output
         first_time = False
         char_id = node[1]
         node = dijkstra_context[str(char_id)]
@@ -201,6 +226,30 @@ def find_connection(start,end):
         "score":score,
         "path":list(reversed(p))
     }
+
+def test_random_connections(num):
+    print("Rolling "+str(num) +" random connections:")
+
+    lowest = {"score": 99999}
+    highest = {"score": -99999}
+
+    for i in range(num):
+        randomise_start_and_end()
+        connection = find_connection(_START,_END)
+        print(str(i)+": "+get_report(connection))
+        score = connection["score"] 
+        if score < lowest["score"] and score >= 0:
+            lowest = connection
+        if score > highest["score"]:
+            highest = connection
+
+    print("\nLowest:")
+    print(get_report(lowest))
+    print(get_verbose_report(lowest))
+
+    print("\nHighest (not counting infinity):")
+    print(get_report(highest))
+    print(get_verbose_report(highest))
 
 def make_average_score_csv():
     print("\nWARNING: This will take ages!\n")
@@ -224,44 +273,27 @@ def make_average_score_csv():
         avg /= count
         averages.write(fix_name(characters[i]["name"]) +","+str(avg)+"\n")
 
-_START = characters.index(get_char_by_name("Susan_Foreman"))
-_END = characters.index(get_char_by_name("Karvanista"))
+_START = characters.index(get_char_by_name("Fugitive_Doctor"))
+_END = characters.index(get_char_by_name("Kate_Stewart"))
 
 def randomise_start_and_end():
     global _START, _END
     _START = randint(0, len(characters) - 1)
     _END = randint(0, len(characters) - 1)
 
-lowest = {"score": 99999}
-highest = {"score": -99999}
+print(get_verbose_report(find_connection(_START,_END)))
 
-print_episodes_for_character(get_char_by_name("Kate Stewart"))
-
-for i in range (100):
-    randomise_start_and_end()
-    connection = find_connection(_START,_END)
-    print("\n")
-    print(get_verbose_report(connection))
-    score = connection["score"] 
-    if score < lowest["score"] and score >= 0:
-        lowest = connection
-    if score > highest["score"]:
-        highest = connection
-
-print("\nLowest:")
-print(get_report(lowest))
-print(get_verbose_report(lowest))
-
-print("\nHighest (not counting infinity):")
-print(get_report(highest))
-print(get_verbose_report(highest))
+test_random_connections(20000)
 
 def print_stats():
-    print("\nMost traversed episodes after "+str(total_num_connections_completed)+" completed connections:\n")
-    print(list(map(lambda x : trim_story_url(fix_name(episodes[int(x)]["episode"])) + ": " + str(episodes_and_traversals[x]), sorted(episodes_and_traversals, reverse=True, key = lambda x : episodes_and_traversals[x]))))
+    print("\nTop 100 most traversed episodes after "+str(total_num_connections_completed)+" successful connections:\n")
+    print(list(map(lambda x : trim_story_url(fix_name(episodes[int(x)]["episode"])) + ": " + str(episodes_and_traversals[x]), sorted(episodes_and_traversals, reverse=True, key = lambda x : episodes_and_traversals[x])))[:100 if total_num_connections_completed >= 100 else total_num_connections_completed])
 
-    print("\nMost traversed characters after "+str(total_num_connections_completed)+" completed connections:\n")
-    print(list(map(lambda x : fix_name(characters[int(x)]["name"]) + ": " + str(characters_and_traversals[x]), sorted(characters_and_traversals, reverse=True, key = lambda x : characters_and_traversals[x]))))
+    print("\nTop 100 most traversed characters after "+str(total_num_connections_completed)+" successful connections:\n")
+    print(list(map(lambda x : fix_name(characters[int(x)]["name"]) + ": " + str(characters_and_traversals[x]), sorted(characters_and_traversals, reverse=True, key = lambda x : characters_and_traversals[x])))[:100 if total_num_connections_completed >= 100 else total_num_connections_completed])
+
+    print("\nMost traversed characters when traversing the watched episode ("+trim_story_url(fix_name(episodes[watched_episode_id]["episode"]))+"):")
+    print(list(map(lambda x : fix_name(characters[int(x)]["name"]) + ": " + str(characters_accessed_when_traversing_the_watched_episode[x]), sorted(characters_accessed_when_traversing_the_watched_episode, reverse=True, key = lambda x : characters_accessed_when_traversing_the_watched_episode[x])[:100 if len(characters_accessed_when_traversing_the_watched_episode) >= 100 else len(characters_accessed_when_traversing_the_watched_episode)])))
 
 print_stats()
 

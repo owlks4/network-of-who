@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <link rel="stylesheet" href="./style.css">
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>⭐</text></svg>" />
+    <title>Six Degrees of Doctor Who</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+</head>
+  <body>
+    <header>
+      <h1 style="text-align: center;" id="title">Six degrees of<br>Doctor Who</h1>
+    </header>
+    <main style="display:flex;justify-content:center;padding-bottom:10vh;">
+      <div style="text-align:left;">
+        <div style="display:flex; flex-direction:column;align-items:center;text-align:left;">
+          <div style="position:relative;text-align:left;min-width:20em;">
+            <h3>Connect this character...</h3>
+            <input class="character-input" id="character-A" type="text" name="character-A">
+          </div>
+          <div style="position:relative;text-align:left;min-width:20em;">
+            <h3>To this character...</h3>
+            <input class="character-input" id="character-B" type="text" name="character-B">
+          </div>
+        </div>
+        <br>
+        <input type="checkbox" id="blacklist-the-doctor" name="blacklist-the-doctor"><label for="blacklist-the-doctor">Don't use the Doctor</label>
+        <br><br>
+        <div style="text-align: center;">
+          <button type="button" id="go">Find connection</button>
+        </div>        
+        <br><br>
+        <hr>
+        <br>
+        <div id="report">
+          
+        </div>    
+      </div>         
+    </main>
+    <script src="./index.js"></script>
+  </body>
+</html>

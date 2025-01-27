@@ -34,7 +34,7 @@ if os.path.isfile(OUTPUT_PATH):
 
 ROOT_URL = "https://mirror.tardis.wiki/wiki/"
 
-season_links = [ROOT_URL + "50th_Anniversary_Specials"]
+season_links = [ROOT_URL + "50th_Anniversary_Specials", ROOT_URL + "60th_Anniversary_Specials"]
 
 episode_links_output = ["The_Five_Doctors_(TV_story)", "Doctor_Who_(TV_story)", "The_Halloween_Apocalypse_(TV_story)", "War_of_the_Sontarans_(TV_story)", "Once,_Upon_Time_(TV_story)", # the TV movie won't be picked up in any season, and the Doctor Who: Flux episodes have an edge case table design, so they're listed here manually
                         "Village_of_the_Angels_(TV_story)", "Survivors_of_the_Flux_(TV_story)", "The_Vanquishers_(TV_story)"]
@@ -42,7 +42,7 @@ episode_links_output = ["The_Five_Doctors_(TV_story)", "Doctor_Who_(TV_story)", 
 for i in range(1,26+1):
     season_links.append(ROOT_URL + "Season_"+str(i)+"_(Doctor_Who_1963)")
 
-for i in range(1,13+1):
+for i in range(1,15+1):
     season_links.append(ROOT_URL + "Series_"+str(i)+"_(Doctor_Who_2005)")
 
 for i in range(1,2+1):
