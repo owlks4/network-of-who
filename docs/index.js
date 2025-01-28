@@ -1,4 +1,4 @@
-let character_names_blacklist = ["Dalek","Daleks","Cyberman","Cybermen","Cyber-Leader","Judoon","Slitheen","Zygon","Ice Warrior","Auton","Weeping Angel","Roy_Skelton"]
+let character_names_blacklist = ["Dalek","Daleks","Cyberman","Cybermen","Cyber-Leader","Silurian","Sontaran","Sea Devil","Judoon","Slitheen","Zygon","Ice Warrior","Auton","Weeping Angel","Ood","Silas Carson","Roy_Skelton"]
 
 let optional_doctor_blacklist = ["The_Doctor","First_Doctor","Second_Doctor","Third_Doctor","Fourth_Doctor","Fifth_Doctor","Sixth_Doctor","Seventh_Doctor","Eighth_Doctor","War_Doctor","Ninth_Doctor","Tenth_Doctor","Eleventh_Doctor","Twelfth_Doctor","Thirteenth_Doctor","Fugitive_Doctor","Fourteenth_Doctor","Fifteenth_Doctor"]
 
@@ -37,7 +37,7 @@ function get_verbose_report(connection){
   let path = connection["path"]
 
   if (path == "blacklist"){
-    return "<strong>Unable to connect those characters.</strong><br/><br/><strong>Reason:</strong> The second character was in the blacklist. Some monsters, like Dalek, Cyberman, etc., have been put on a connections blacklist because they're more of a species than a character.<br><br>If you still really want to see the connection, put the blacklisted character as the first character and it should work.";
+    return "<strong>Unable to connect those characters.</strong><br/><br/><strong>Reason:</strong> The second character was in the blacklist. Some monsters, like Dalek, Cyberman, etc., have been put on a connections blacklist because they're more of a species than a character.";
   }
 
   if (connection.start == -1 || connection.end == -1){

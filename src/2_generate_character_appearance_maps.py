@@ -6,7 +6,7 @@ import json
 import os
 from random import shuffle
 
-FOREVER_BLACKLIST = ["", "dwm_284", "roy_skelton", "captain", "brigadier", "professor", "lieutenant", "dalek_operator", "colonel", "commander", "trap_street", "covent_garden", "william_hartnell","patrick_troughton","jon_pertwee","tom_baker","peter_davison","colin_baker","sylvester_mccoy","paul_mcgann","john_hurt","christopher_eccleston","david_tennant","matt_smith","peter_capaldi","jodie_whittaker","jo_martin","ncuti_gatwa", "gabriel_woolf", "nicholas_briggs", "paul_kasey"] #some items I was having trouble with due to non-standard listing in the cast list, often due to being voice roles or 'introducing...'
+FOREVER_BLACKLIST = ["", "silurian","sontaran","sea devil", "dwm_284", "roy_skelton", "captain", "brigadier", "professor", "lieutenant", "dalek_operator", "colonel", "commander", "trap_street", "covent_garden", "william_hartnell","patrick_troughton","jon_pertwee","tom_baker","peter_davison","colin_baker","sylvester_mccoy","paul_mcgann","john_hurt","christopher_eccleston","david_tennant","matt_smith","peter_capaldi","jodie_whittaker","jo_martin","ncuti_gatwa", "gabriel_woolf", "nicholas_briggs", "paul_kasey"] #some items I was having trouble with due to non-standard listing in the cast list, often due to being voice roles or 'introducing...'
 
 OUTPUT_PATH = "charmap.json"
 WEB_OUTPUT_PATH = "../docs/charmap.json"
@@ -100,12 +100,14 @@ def process_characters(cast, episode_id):
         char = cast[i]
         if char == "Kate_Lethbridge-Stewart":
             char = "Kate_Stewart"
-        if char == "Jo Jones":
-            char = "Jo Grant"
+        if char == "Jo_Jones":
+            char = "Jo_Grant"
         if char == "Brigadier_Lethbridge-Stewart":
             char = "Alistair_Gordon_Lethbridge-Stewart"
         if char == "K9_Mark_I" or char == "K9_Mark_II" or char == "K9_Mark_III" or char == "K9_Mark_IV": #it's already a bit inconsistent so I might as well make them all the same. He basically is the same character every time anyway.
             char = "K9"
+        if char == "R":
+            char = "R/T Soldier"
         char_lower = char.lower()
         match = None
         for entry in characters:
@@ -139,7 +141,6 @@ for episode in episode_links:
     elif "the_giggle" in episode_lower:
         cast.append("Fifteenth_Doctor") 
     elif "mission_to_the_unknown" in episode_lower:
-        cast.remove("First_Doctor")
         cast.remove("The_Doctor")
     elif "the_reign_of_terror" in episode_lower:
         cast.remove("Susan")
