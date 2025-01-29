@@ -2,8 +2,10 @@ import json
 from urllib.parse import unquote, quote
 from random import randint
 import os
+import datetime
 
-blacklist = ["Dalek","Daleks","Cyberman","Cybermen","Cyber-Leader","Judoon","Slitheen","Zygon","Ice Warrior","Auton","Weeping Angel"]#,"First_Doctor","Second_Doctor","Third_Doctor","Fourth_Doctor","Fifth_Doctor","Sixth_Doctor","Seventh_Doctor","Eighth_Doctor","War_Doctor","Ninth_Doctor","Tenth_Doctor","Eleventh_Doctor","Twelfth_Doctor","Thirteenth_Doctor","Fugitive_Doctor","Fourteenth_Doctor","Fifteenth_Doctor"]
+# N.B. the blacklist gets turned into a list of IDs a few lines after this.
+blacklist = ["Dalek","Daleks","Cyberman","Cybermen","Cyber-Leader","Major","Judoon","Slitheen","Zygon","Ice_Warrior","Auton","Weeping_Angel"]#,"First_Doctor","Second_Doctor","Third_Doctor","Fourth_Doctor","Fifth_Doctor","Sixth_Doctor","Seventh_Doctor","Eighth_Doctor","War_Doctor","Ninth_Doctor","Tenth_Doctor","Eleventh_Doctor","Twelfth_Doctor","Thirteenth_Doctor","Fugitive_Doctor","Fourteenth_Doctor","Fifteenth_Doctor"]
 
 FOREVER_BLACKLIST = [""]
 
@@ -22,6 +24,15 @@ def get_char_by_name(name):
         if character["name"] == name:
             return character
     return None
+
+for i in range(len(blacklist)): #turn blacklist into a list of IDs for fast access during the BFS algorithm
+    character = get_char_by_name(blacklist[i])
+    if not character == None:
+        blacklist[i] = characters.index(character)
+    else:
+        blacklist[i] = None
+
+blacklist = list(filter(lambda x : not x == None, blacklist))
 
 def get_episode_by_name(name):
     name = fix_name(trim_story_url(name))
@@ -70,7 +81,7 @@ def get_chars_in_episode_once_blacklist_removed(episode):
     output = []
     chars = episode["chars"]
     for char in chars:
-        if not characters[char]["name"] in blacklist:
+        if not char in blacklist:
             output.append(char)
     return output
 
@@ -95,7 +106,14 @@ characters_accessed_when_traversing_the_watched_episode = {}
 
 total_num_connections_completed = 0
 
-def find_connection(start,end):
+def get_episode_ID_in_common(c1, c2):
+    for episode in characters[c1]["episodes"]:
+        for other_episode in characters[c2]["episodes"]:
+            if episode == other_episode:
+                return episode
+    return None
+
+def find_connection_BFS(start,end):
     global total_num_connections_completed
 
     complete = False
@@ -105,73 +123,43 @@ def find_connection(start,end):
             print("Start and end are the same person")
         return {"start":start,"end":end,"score":0,"path":[{"ep":characters[start]["episodes"][0], "chr":start}]}
 
-    dijkstra_context = {} # stores arrays in format [dist, prev, episode_id_where_connection_was_made, has_been_focal_node]
-
-    dijkstra_context[str(start)] = [0,-1,-1, False]
-    node = start
-    curdist = 0
-
-    if characters[end]["name"] in blacklist:
+    if end in blacklist:
         print("Intended endpoint '"+characters[end]["name"]+"' was in blacklist; will skip.")
-    else:
-        while not complete:
-            
-            #print("Focal node is "+str(node))
+        return {"start":start,"end":end,"score":-1,"path":None}
+    
+    queue = [start]
+    prevs = {}
+    visited = [start]
 
-            if curdist == 0:
-                curdist = 1
-            else:
-                curdist = dijkstra_context[str(node)][0] + 1
+    prevs[str(start)] = -1
 
-            chars_to_expand = []
+    while not complete:
 
-            dijkstra_context[str(node)][3] = True
-
+        if len(queue) == 0:
             if verbose:
-                print("Expanding "+characters[node]["name"])
+                print("Exhausted all node adjacencies!")                        
+            break
 
-            local_char_to_ep_map = {}
+        node = queue.pop(0)
 
-            #print("Looking at their episodes...")
+        if verbose:
+            print("Expanding "+characters[node]["name"])
 
-            for episode in characters[node]["episodes"]:
-                for c in episodes[episode]["chars"]:
-                    if not str(c) in dijkstra_context.keys() and not c in chars_to_expand:
-                        local_char_to_ep_map[str(c)] = episode
-                        chars_to_expand.append(c)
-
-            #print("Registering nodes linked to them via their episodes...")
-
-            for char in chars_to_expand:
-                if not characters[char]["name"] in blacklist:
-                    dijkstra_context[str(char)] = [curdist, node, local_char_to_ep_map[str(char)], False]
-                    if char == end:
+        for episode in characters[node]["episodes"]:
+            #print("Looking at episode "+episodes[episode]["episode"])
+            for c in episodes[episode]["chars"]:
+                if not c in visited and not c in blacklist:
+                    prevs[str(c)] = node
+                    queue.append(c)
+                    visited.append(c)
+                    if c == end:
                         complete = True
                         break
-
             if complete:
                 break
 
-            lowest_dist = 999999    
-
-            #print("Considering which to expand next...")
-
-            node = None
-
-            for potential_next_node in dijkstra_context.keys():
-                node_object = dijkstra_context[potential_next_node]
-                if node_object[0] < lowest_dist and not node_object[3] and not node_object[1] == -1 and not characters[int(potential_next_node)]["name"] in blacklist:
-                    node = int(potential_next_node)
-                    lowest_dist = node_object[0]
-            
-            if node == None:
-                print("Could not move to an adjacent node!")
-                break
-            
-            #print("Choosing "+str(node))
-
     if verbose:
-        print("Finished")
+        print("Finished BFS loop")
 
     if not complete:
         if verbose:
@@ -181,14 +169,14 @@ def find_connection(start,end):
 
     output = ""
     char_id = end
-    node = dijkstra_context[str(char_id)]
     first_time = True
 
     score = 0
     p = []
 
-    while not node[1] == -1:
-        ep_id = node[2]
+    while not prevs[str(char_id)] == -1:
+        prev = prevs[str(char_id)]
+        ep_id = get_episode_ID_in_common(prev, char_id)
         
         #just some housekeeping to track statistics:
         if ep_id in episodes_and_traversals:
@@ -214,8 +202,8 @@ def find_connection(start,end):
         score += 1
         output = " was in " + trim_story_url(fix_name(episodes[ep_id]["episode"])) + " with " + fix_name(characters[char_id]["name"]) + ("" if first_time else ", who") + output
         first_time = False
-        char_id = node[1]
-        node = dijkstra_context[str(char_id)]
+        char_id = prev
+
     output = fix_name(characters[start]["name"]) + output
 
     total_num_connections_completed += 1
@@ -235,7 +223,7 @@ def test_random_connections(num):
 
     for i in range(num):
         randomise_start_and_end()
-        connection = find_connection(_START,_END)
+        connection = find_connection_BFS(_START,_END)
         print(str(i)+": "+get_report(connection))
         score = connection["score"] 
         if score < lowest["score"] and score >= 0:
@@ -256,7 +244,7 @@ def make_average_score_csv():
     if os.path.isfile("average_distance_per_character.csv"):
         os.remove("average_distance_per_character.csv")
 
-    averages = open("average_distance_per_character.csv", mode="a+", encoding="utf-8")
+    d = {}
 
     for i in range(len(characters)):
         avg = 0
@@ -265,25 +253,62 @@ def make_average_score_csv():
         for j in range(len(characters)):
             if i == j:
                 continue
-            connection = find_connection(i,j)
+            connection = find_connection_BFS(i,j)
             score = connection["score"]
             if not score == -1:
                 avg += score
                 count += 1
         avg /= count
-        averages.write(fix_name(characters[i]["name"]) +","+str(avg)+"\n")
+        d[str(i)] = avg
+        open("average_distance_per_character.csv", mode="w+", encoding="utf-8").write("\n".join(list(map(lambda key : fix_name(characters[int(key)]["name"])+","+str(d[key]), d.keys()))))
 
-_START = characters.index(get_char_by_name("Fugitive_Doctor"))
-_END = characters.index(get_char_by_name("Kate_Stewart"))
+def test_every_other_connection_from_character(id):
+    d = {}
+    avg = 0
+    count = 0
 
+    time_started = datetime.datetime.now()
+ 
+    lowest = {"score": 99999}
+    highest = {"score": -99999}
+
+    out_of = "/"+str(len(characters))
+
+    for i in range(len(characters)):
+        if i == id:
+            continue
+        connection = find_connection_BFS(id,i)
+        score = connection["score"]
+        d[str(i)] = score
+        if not score == -1:
+            avg += score
+            count += 1
+        if score < lowest["score"] and score >= 0:
+            lowest = connection
+        if score > highest["score"]:
+            highest = connection
+        print(str(i)+out_of)
+    avg /= count
+    print(characters[id]["name"] +" had an average score of "+ str(avg) +" when tested against every other character.")
+
+    print("TIME TAKEN: "+str(datetime.datetime.now() - time_started))
+
+    print("\nTop 100 highest scoring connections for them after "+str(total_num_connections_completed)+" successful connections:\n")
+    print(list(map(lambda x : fix_name(characters[int(x)]["name"]) + ": " + str(d[x]), sorted(d, reverse=True, key = lambda x : d[x])))[:100 if total_num_connections_completed >= 100 else total_num_connections_completed])
+    
 def randomise_start_and_end():
     global _START, _END
     _START = randint(0, len(characters) - 1)
     _END = randint(0, len(characters) - 1)
 
-print(get_verbose_report(find_connection(_START,_END)))
+_START = characters.index(get_char_by_name("Marc_Cory"))
+_END = characters.index(get_char_by_name("Suzie_Costello"))
 
-test_random_connections(20000)
+print(get_verbose_report(find_connection_BFS(_START,_END)))
+
+#test_random_connections(200)
+
+#test_every_other_connection_from_character(characters.index(get_char_by_name("Marc_Cory")))
 
 def print_stats():
     print("\nTop 100 most traversed episodes after "+str(total_num_connections_completed)+" successful connections:\n")

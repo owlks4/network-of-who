@@ -6,7 +6,7 @@ import json
 import os
 from random import shuffle
 
-FOREVER_BLACKLIST = ["", "silurian","sontaran","sea devil", "dwm_284", "roy_skelton", "captain", "brigadier", "professor", "lieutenant", "dalek_operator", "colonel", "commander", "trap_street", "covent_garden", "william_hartnell","patrick_troughton","jon_pertwee","tom_baker","peter_davison","colin_baker","sylvester_mccoy","paul_mcgann","john_hurt","christopher_eccleston","david_tennant","matt_smith","peter_capaldi","jodie_whittaker","jo_martin","ncuti_gatwa", "gabriel_woolf", "nicholas_briggs", "paul_kasey"] #some items I was having trouble with due to non-standard listing in the cast list, often due to being voice roles or 'introducing...'
+FOREVER_BLACKLIST = ["", "silurian","sontaran","sea devil", "dwm_284", "roy_skelton", "major", "captain", "brigadier", "professor", "lieutenant", "dalek_operator", "colonel", "commander", "trap_street", "covent_garden", "william_hartnell","patrick_troughton","jon_pertwee","tom_baker","peter_davison","colin_baker","sylvester_mccoy","paul_mcgann","john_hurt","christopher_eccleston","david_tennant","matt_smith","peter_capaldi","jodie_whittaker","jo_martin","ncuti_gatwa", "gabriel_woolf", "nicholas_briggs", "paul_kasey"] #some items I was having trouble with due to non-standard listing in the cast list, often due to being voice roles or 'introducing...'
 
 OUTPUT_PATH = "charmap.json"
 WEB_OUTPUT_PATH = "../docs/charmap.json"
@@ -130,9 +130,10 @@ for episode in episode_links:
     cast = parse_cast_list(episode)
     episode_lower = episode.lower()
     if "the_day_of_the_doctor" in episode_lower:
-        cast.extend(["First_Doctor","Second_Doctor","Third_Doctor","Fourth_Doctor","The_Curator_(The_Day_of_the_Doctor)","Fifth_Doctor","Sixth_Doctor",
-                     "Seventh_Doctor","Eighth_Doctor","War_Doctor","Ninth_Doctor","Tenth_Doctor","Eleventh_Doctor","Twelfth_Doctor"])
+        cast.extend(["The_Curator_(The_Day_of_the_Doctor)","War_Doctor","Ninth_Doctor","Tenth_Doctor","Eleventh_Doctor","Twelfth_Doctor"]) #after much debate I've decided not to include the classic doctors in DOTD - it's a good enough connection node as it is without pretending that the cameos really amount to those characters being present! I doubt it will actually harm many scores, and will lead to more satisfying connection paths than 'Third Doctor was in Day of the Doctor' when his appearance is so fleeting and solely using archive footage.
         cast.remove("The_Doctor")
+        if "First_Doctor" in cast: # From John Guilor's voice credit as the first doctor. As discussed above I don't really think this should be included as an appearance of the first doctor because it's so fleeting and cameo-like, even if it's supposed to be a novel appearance.
+            cast.remove("First_Doctor")
     elif "the_power_of_the_doctor" in episode_lower:
         cast.extend(["Guardians_of_the_Edge","Thirteenth_Doctor"])
         cast.remove("The_Doctor")

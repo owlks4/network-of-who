@@ -1,5 +1,7 @@
-# Six Degrees of Doctor Who
+# Network of Who
 
-A degrees of separation finder for Doctor Who characters, generated from the cast lists on TARDIS Wiki.
+A degrees of separation finder for Doctor Who characters, generated from 60 years' worth of cast lists.
 
-Play around with it [here](https://owlks4.github.io/six-degrees-of-doctor-who/). It's surprisingly difficult to find connections with a score above 4!
+Play around with it [here](https://owlks4.github.io/network-of-who/). It's surprisingly difficult to find connections with a score above 4!
+
+Cast lists were retrieved from TARDIS Wiki under CC BY-SA 3.0.
