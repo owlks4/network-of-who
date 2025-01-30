@@ -6,7 +6,7 @@ import json
 import os
 from random import shuffle
 
-FOREVER_BLACKLIST = ["", "silurian","sontaran","sea devil", "dwm_284", "roy_skelton", "major", "captain", "brigadier", "professor", "lieutenant", "dalek_operator", "colonel", "commander", "trap_street", "covent_garden", "william_hartnell","patrick_troughton","jon_pertwee","tom_baker","peter_davison","colin_baker","sylvester_mccoy","paul_mcgann","john_hurt","christopher_eccleston","david_tennant","matt_smith","peter_capaldi","jodie_whittaker","jo_martin","ncuti_gatwa", "gabriel_woolf", "nicholas_briggs", "paul_kasey"] #some items I was having trouble with due to non-standard listing in the cast list, often due to being voice roles or 'introducing...'
+FOREVER_BLACKLIST = ["", "mr", "mrs", "miss", "dancer", "piano", "music", "silurian","sontaran","sea devil", "dwm_284", "chancellor", "lord_president", "roy_skelton", "major", "captain", "brigadier", "professor", "lieutenant", "dalek_operator", "colonel", "commander", "trap_street", "covent_garden", "william_hartnell","patrick_troughton","jon_pertwee","tom_baker","peter_davison","colin_baker","sylvester_mccoy","paul_mcgann","john_hurt","christopher_eccleston","david_tennant","matt_smith","peter_capaldi","jodie_whittaker","jo_martin","ncuti_gatwa", "gabriel_woolf", "nicholas_briggs", "paul_kasey"] #some items I was having trouble with due to non-standard listing in the cast list, often due to being voice roles or 'introducing...'
 
 OUTPUT_PATH = "charmap.json"
 WEB_OUTPUT_PATH = "../docs/charmap.json"
@@ -85,7 +85,7 @@ def parse_cast_list(episode):
 
 ROOT_URL = "https://mirror.tardis.wiki/wiki/"
 
-episode_links = open("episodes.txt", mode="r", encoding="utf-8").read().replace("\r","").split("\n")
+episode_links = open("episodes.txt", mode="r", encoding="utf-8").read().replace("\r","").strip().split("\n")
 
 #shuffle(episode_links)
 
@@ -96,13 +96,23 @@ characters = []
 def process_characters(cast, episode_id):
     print(cast)
     output = []
+    if "" in cast:
+        cast.remove("")
     for i in range(len(cast)):
         char = cast[i]
         if char == "Kate_Lethbridge-Stewart":
             char = "Kate_Stewart"
         if char == "Jo_Jones":
             char = "Jo_Grant"
-        if char == "Brigadier_Lethbridge-Stewart":
+        if char == "Mel_Bush":
+            char = "Melanie_Bush"
+        if char == "Tegan":
+            char = "Tegan_Jovanka"
+        if char == "Turlough":
+            char = "Vislor_Turlough"
+        if char == "Victoria":
+            char = "Queen_Victoria"
+        if char == "Brigadier_Lethbridge-Stewart" or char == "Alastair_Lethbridge-Stewart":
             char = "Alistair_Gordon_Lethbridge-Stewart"
         if char == "K9_Mark_I" or char == "K9_Mark_II" or char == "K9_Mark_III" or char == "K9_Mark_IV": #it's already a bit inconsistent so I might as well make them all the same. He basically is the same character every time anyway.
             char = "K9"
@@ -134,6 +144,10 @@ for episode in episode_links:
         cast.remove("The_Doctor")
         if "First_Doctor" in cast: # From John Guilor's voice credit as the first doctor. As discussed above I don't really think this should be included as an appearance of the first doctor because it's so fleeting and cameo-like, even if it's supposed to be a novel appearance.
             cast.remove("First_Doctor")
+    elif "the_time_of_the_doctor" in episode_lower:
+        if "The_General" in cast:
+            cast.remove("The_General")
+            cast.append("Eleventh_General")
     elif "the_power_of_the_doctor" in episode_lower:
         cast.extend(["Guardians_of_the_Edge","Thirteenth_Doctor"])
         cast.remove("The_Doctor")
@@ -147,7 +161,7 @@ for episode in episode_links:
         cast.remove("Susan")
         cast.append("Susan_Foreman")
     elif "survivors_of_the_flux" in episode_lower: #sorry brig fans... it's the tiniest of voice cameos and really shouldn't amount to a connection...
-        cast.remove("Alistair_Gordon_Lethbridge-Stewart")
+        cast.remove("Alistair_Gordon_Lethbridge-Stewart")    
     episode_charmaps.append({"episode":episode, "chars":process_characters(list(dict.fromkeys(cast)), episode_links.index(episode))}) #the list(dict.fromkeys()) part is there to remove duplicates in the list (e.g. if a character is repeated twice in the same cast list for whatever reason (e.g. two daleks) we only need to record one instance)    
     print(str(num_complete)+out_of_str)
     num_complete += 1

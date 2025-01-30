@@ -166,8 +166,11 @@ function convertDecodedNamesToIDs(a,b){
   let aFound = false;
   let bFound = false;
 
+  a = a.toLowerCase();
+  b = b.toLowerCase();
+
   for (let i = 0; i < charas.length; i++){ //reassociate the clean, autocompleted versions of the character names with their characters again
-    let decodedName = decodeName(charas[i].name);
+    let decodedName = decodeName(charas[i].name).toLowerCase();
     if (decodedName == a){
       a = i;
       aFound = true;

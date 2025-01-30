@@ -34,6 +34,11 @@ for i in range(len(blacklist)): #turn blacklist into a list of IDs for fast acce
 
 blacklist = list(filter(lambda x : not x == None, blacklist))
 
+characters_with_blacklisted_chars_as_none = characters.copy()
+
+for blacklisted_ID in blacklist:
+    characters_with_blacklisted_chars_as_none[blacklisted_ID] = None
+
 def get_episode_by_name(name):
     name = fix_name(trim_story_url(name))
     for episode in episodes:
@@ -123,6 +128,10 @@ def find_connection_BFS(start,end):
             print("Start and end are the same person")
         return {"start":start,"end":end,"score":0,"path":[{"ep":characters[start]["episodes"][0], "chr":start}]}
 
+    if start in blacklist:
+        print("Intended start point '"+characters[start]["name"]+"' was in blacklist; will skip.")
+        return {"start":start,"end":end,"score":-1,"path":None}
+
     if end in blacklist:
         print("Intended endpoint '"+characters[end]["name"]+"' was in blacklist; will skip.")
         return {"start":start,"end":end,"score":-1,"path":None}
@@ -148,7 +157,7 @@ def find_connection_BFS(start,end):
         for episode in characters[node]["episodes"]:
             #print("Looking at episode "+episodes[episode]["episode"])
             for c in episodes[episode]["chars"]:
-                if not c in visited and not c in blacklist:
+                if not c in visited and not characters_with_blacklisted_chars_as_none[c] == None:
                     prevs[str(c)] = node
                     queue.append(c)
                     visited.append(c)
@@ -246,21 +255,49 @@ def make_average_score_csv():
 
     d = {}
 
+    avg_for_character_in_episode_if_they_are_unique_to_that_episode = {}
+
+    episodes_of_prev = []
+    avg_of_prev = None
+
     for i in range(len(characters)):
         avg = 0
         count = 0
-        print("Looking at "+characters[i]["name"])
-        for j in range(len(characters)):
-            if i == j:
-                continue
-            connection = find_connection_BFS(i,j)
-            score = connection["score"]
-            if not score == -1:
-                avg += score
-                count += 1
-        avg /= count
-        d[str(i)] = avg
-        open("average_distance_per_character.csv", mode="w+", encoding="utf-8").write("\n".join(list(map(lambda key : fix_name(characters[int(key)]["name"])+","+str(d[key]), d.keys()))))
+        chara = characters[i]
+        print("Looking at "+chara["name"])
+        
+        if len(chara["episodes"]) == 1:
+            the_only_ep = chara["episodes"][0]
+            if str(the_only_ep) in avg_for_character_in_episode_if_they_are_unique_to_that_episode.keys(): #then grab it from the cache
+                d[str(i)] = avg = avg_for_character_in_episode_if_they_are_unique_to_that_episode[str(the_only_ep)]
+                print("Using the cache")
+                count = -1 #and set this to -1 so that we know not to perform the loop
+
+        if not count == -1:
+            if sorted(chara["episodes"]) == episodes_of_prev: #if the episodes that this character is in is exactly the same as the previous character, just use the previous average
+                avg = avg_of_prev
+            else:
+                for j in range(len(characters)):
+                    if i == j:
+                        continue            
+                    connection = find_connection_BFS(i,j)
+                    score = connection["score"]
+                    if not score == -1:
+                        avg += score
+                        count += 1
+                if count > 0:
+                    avg /= count
+                else:
+                    avg = -1
+            d[str(i)] = avg
+            if not avg_of_prev == avg: #if we didn't calculate the avg from avg_of_prev, then clearly, the episodes for this character were different to that of the prev, so we need to update episodes_of_prev with a new value
+                episodes_of_prev = sorted(chara["episodes"])
+            avg_of_prev = avg
+            
+            if len(chara["episodes"]) == 1: #if this is true and yet we still got here, via the actual calculation loop, it's clear that the episode didn't have a key in the cache, so we make one now.
+                avg_for_character_in_episode_if_they_are_unique_to_that_episode[str(chara["episodes"][0])] = avg
+
+        open("average_distance_per_character.csv", mode="w+", encoding="utf-8").write("\n".join(list(map(lambda key : '"'+fix_name(characters[int(key)]["name"])+'",'+str(d[key]), d.keys()))))
 
 def test_every_other_connection_from_character(id):
     d = {}
@@ -301,10 +338,12 @@ def randomise_start_and_end():
     _START = randint(0, len(characters) - 1)
     _END = randint(0, len(characters) - 1)
 
-_START = characters.index(get_char_by_name("Marc_Cory"))
-_END = characters.index(get_char_by_name("Suzie_Costello"))
+_START = characters.index(get_char_by_name("First_Doctor"))
+_END = characters.index(get_char_by_name("Joy_Almondo"))
 
-print(get_verbose_report(find_connection_BFS(_START,_END)))
+print("\n")
+
+#print(get_verbose_report(find_connection_BFS(_START,_END)))
 
 #test_random_connections(200)
 
