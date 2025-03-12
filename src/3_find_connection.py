@@ -5,7 +5,7 @@ import os
 import datetime
 
 # N.B. the blacklist gets turned into a list of IDs a few lines after this.
-blacklist = ["Dalek","Daleks","Cyberman","Cybermen","Cyber-Leader","Major","Judoon","Slitheen","Zygon","Ice_Warrior","Auton","Weeping_Angel"]#,"First_Doctor","Second_Doctor","Third_Doctor","Fourth_Doctor","Fifth_Doctor","Sixth_Doctor","Seventh_Doctor","Eighth_Doctor","War_Doctor","Ninth_Doctor","Tenth_Doctor","Eleventh_Doctor","Twelfth_Doctor","Thirteenth_Doctor","Fugitive_Doctor","Fourteenth_Doctor","Fifteenth_Doctor"]
+blacklist = ["Dalek","Daleks","Cyberman","Cybermen","Cyber-Leader","Major","Judoon","Slitheen","Zygon","Ice_Warrior","Auton","Weeping_Angel","First_Doctor","Second_Doctor","Third_Doctor","Fourth_Doctor","Fifth_Doctor","Sixth_Doctor","Seventh_Doctor","Eighth_Doctor","War_Doctor","Ninth_Doctor","Tenth_Doctor","Eleventh_Doctor","Twelfth_Doctor","Thirteenth_Doctor","Fugitive_Doctor","Fourteenth_Doctor","Fifteenth_Doctor"]
 
 FOREVER_BLACKLIST = [""]
 
@@ -338,8 +338,8 @@ def randomise_start_and_end():
     _START = randint(0, len(characters) - 1)
     _END = randint(0, len(characters) - 1)
 
-_START = characters.index(get_char_by_name("First_Doctor"))
-_END = characters.index(get_char_by_name("Joy_Almondo"))
+_START = characters.index(get_char_by_name("Dorothea_Ames"))
+_END = characters.index(get_char_by_name("Tom_Barclay"))
 
 print("\n")
 
@@ -347,7 +347,7 @@ print("\n")
 
 #test_random_connections(200)
 
-#test_every_other_connection_from_character(characters.index(get_char_by_name("Marc_Cory")))
+test_every_other_connection_from_character(characters.index(get_char_by_name("Dorothea_Ames")))
 
 def print_stats():
     print("\nTop 100 most traversed episodes after "+str(total_num_connections_completed)+" successful connections:\n")

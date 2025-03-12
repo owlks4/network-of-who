@@ -10,7 +10,9 @@
 </head>
   <body>
     <header>
-      <h1 style="text-align: center;" id="title">Six degrees of<br>Doctor Who</h1>
+      <h1 style="text-align: center;" id="title" title="Also including SJA, Torchwood, Class, and K9 & Company">
+        Six degrees of<br>Doctor Who
+      </h1>
     </header>
     <main style="display:flex;justify-content:center;padding-bottom:10vh;">
       <div style="text-align:left;">
@@ -28,9 +30,17 @@
         <input type="checkbox" id="blacklist-the-doctor" name="blacklist-the-doctor"><label for="blacklist-the-doctor">Don't use the Doctor</label>
         <br><br>
         <div style="text-align: center;">
-          <button type="button" id="go">Find connection</button>
+          <button type="button" id="random">Randomize</button>
+          <button type="button" id="go">Find connection</button>         
+        </div>
+        <br>
+        <div class="curiosity" id="longest-connection-info" title="Which two characters are furthest apart?">
+          <u>Which two characters are furthest apart?</u>
+        </div>
+        <div class="curiosity" id="dotd-disclaimer" title="Why are the DOTD cameos not counted?">
+          <u>Why are the DOTD cameos not counted?</u>
         </div>        
-        <br><br>
+        <br>
         <hr>
         <br>
         <div id="report">

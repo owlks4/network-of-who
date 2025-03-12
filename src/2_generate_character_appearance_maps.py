@@ -6,7 +6,7 @@ import json
 import os
 from random import shuffle
 
-FOREVER_BLACKLIST = ["", "mr", "mrs", "miss", "dancer", "piano", "music", "silurian","sontaran","sea devil", "dwm_284", "chancellor", "lord_president", "roy_skelton", "major", "captain", "brigadier", "professor", "lieutenant", "dalek_operator", "colonel", "commander", "trap_street", "covent_garden", "william_hartnell","patrick_troughton","jon_pertwee","tom_baker","peter_davison","colin_baker","sylvester_mccoy","paul_mcgann","john_hurt","christopher_eccleston","david_tennant","matt_smith","peter_capaldi","jodie_whittaker","jo_martin","ncuti_gatwa", "gabriel_woolf", "nicholas_briggs", "paul_kasey"] #some items I was having trouble with due to non-standard listing in the cast list, often due to being voice roles or 'introducing...'
+FOREVER_BLACKLIST = ["", "mr", "mrs", "miss", "dancer", "piano", "music", "silurian", "sontaran","sea devil", "karen gillan", "dwm_284", "doctor_who_and_the_silurians_uncredited_cast", "chancellor", "lord_president", "roy_skelton", "major", "captain", "brigadier", "professor", "lieutenant", "dalek_operator", "colonel", "commander", "trap_street", "covent_garden", "william_hartnell","patrick_troughton","jon_pertwee","tom_baker","peter_davison","colin_baker","sylvester_mccoy","paul_mcgann","john_hurt","christopher_eccleston","david_tennant","matt_smith","peter_capaldi","jodie_whittaker","jo_martin","ncuti_gatwa", "gabriel_woolf", "nicholas_briggs", "paul_kasey"] #some items I was having trouble with due to non-standard listing in the cast list, often due to being voice roles or 'introducing...'
 
 OUTPUT_PATH = "charmap.json"
 WEB_OUTPUT_PATH = "../docs/charmap.json"
@@ -162,6 +162,8 @@ for episode in episode_links:
         cast.append("Susan_Foreman")
     elif "survivors_of_the_flux" in episode_lower: #sorry brig fans... it's the tiniest of voice cameos and really shouldn't amount to a connection...
         cast.remove("Alistair_Gordon_Lethbridge-Stewart")    
+    elif "into_the_dalek" in episode_lower:
+        cast.append("Rusty_(Into_the_Dalek)")
     episode_charmaps.append({"episode":episode, "chars":process_characters(list(dict.fromkeys(cast)), episode_links.index(episode))}) #the list(dict.fromkeys()) part is there to remove duplicates in the list (e.g. if a character is repeated twice in the same cast list for whatever reason (e.g. two daleks) we only need to record one instance)    
     print(str(num_complete)+out_of_str)
     num_complete += 1

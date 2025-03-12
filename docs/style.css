@@ -5,6 +5,7 @@
 html {
   margin:0;
   padding:0;
+  overflow-x:clip;
 }
 
 body {
@@ -79,4 +80,13 @@ input[type=submit] {
   /*when navigating through the items using the arrow keys:*/
   background-color: DodgerBlue !important;
   color: #ffffff;
+}
+
+.curiosity {
+  text-transform:underline;
+  cursor:pointer;
+  font-size:0.6em;
+  text-align:center;
+  color:rgb(150,150,150);
+  padding-bottom:0.35em;
 }

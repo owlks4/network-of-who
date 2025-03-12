@@ -146,12 +146,32 @@ function establishAutocomplete(input, arr) {
 let charmap = null;
 let goButton = document.getElementById("go");
 goButton.onclick = ()=>{
-   let connection = attemptToFindConnection(charaA.value.trim(), charaB.value.trim(), false);
+   let benchmark = new Date().getTime();
+   let connection = attemptToFindConnection_BFS(charaA.value.trim(), charaB.value.trim(), false);
+   console.log("Time taken: "+((new Date().getTime() - benchmark)/1000.0) + " seconds")
    document.getElementById("report").innerHTML = get_verbose_report(connection);
 };
 
 let charaA = document.getElementById("character-A");
 let charaB = document.getElementById("character-B");
+
+function getRandomInt(max) {
+  return Math.floor(Math.random() * max);
+}
+
+document.getElementById("random").onclick = () => {  
+  charaA.value = decodeName(charmap.characters[getRandomInt(charmap.characters.length)].name);
+  charaB.value = decodeName(charmap.characters[getRandomInt(charmap.characters.length)].name);
+  goButton.click();
+};
+
+document.getElementById("dotd-disclaimer").onclick = ()=>{
+  alert("Why aren't the classic Doctors counted as being in The Day of the Doctor?\n\nAnswer: When included, the classic cameos in DOTD have an unjustifiably large impact on the connections web for what is really just a stock footage appearance, even if it's supposed to be unique from a story point of view.\n\nThere are plenty of other tentpole connections, like Ian in Power of the Doctor, and it'd be a shame if they never had the opportunity to be used!\n\nThe same decision was made with the Brig's voice cameo in Flux. I kept the Fourth Doctor in The Five Doctors because those clips WERE effectively a new 4/Romana scene on broadcast, even though they were filmed as part of Shada.")
+}
+
+document.getElementById("longest-connection-info").onclick = ()=>{
+  alert("When you exclude the Doctor, I think the 'worst' connections are from:\n\n• any character exclusive to Class who was NOT in 'For Tonight we Might Die' (e.g. Dorothea Ames)\n\nTO\n\n• any character who only appeared in 'The Deadly Assassin' (e.g. Goth)\n\nAnother good shout is Mission to the Unknown, but it tends to have a slightly lower score due to some easy New Who connections to the 60s, like Ian Chesterton.\n\nWhen not using the Doctor, Mission to the Unknown is probably your best bet. As of writing this, you can even get 5th degree, Doctor-inclusive connections between Mission to the Unknown and Joy to the World, though I imagine that will change as the 15th Doctor becomes better-connected.")
+}
 
 async function start(){
   const response = await fetch("charmap.json");
@@ -207,7 +227,13 @@ function get_char_ID_by_name(name){
   return null
 }
 
-function attemptToFindConnection(a, b, verbose){
+function attemptToFindConnection_BFS(start,end){
+    let complete = false;
+
+    let decoded = convertDecodedNamesToIDs(start,end);
+
+    start = decoded[0]
+    end = decoded[1]
 
     let characters = charmap.characters;  
     let episodes = charmap.episodes;
@@ -218,181 +244,88 @@ function attemptToFindConnection(a, b, verbose){
       blacklist = blacklist.concat(optional_doctor_blacklist.map((x) => {return get_char_ID_by_name(x)}));
     }
 
-    let IDs = convertDecodedNamesToIDs(a,b);
-    
-    let start = IDs[0];
-    let end = IDs[1];    
-
-    if (start == -1 || end == -1){
-      return {
-        "start":start,
-        "end":end,
-        "score":-1,
-        "path":null
-      }
-    }
-
-    let complete = false
-
-    if (start == end){
-      if (verbose){
+    if (start == end){        
         console.log("Start and end are the same person")
-      }
-      return {
-        "start":start,
-        "end":end,
-        "score":0,
-        "path":[{"ep":characters[start]["episodes"][0], "chr":start}]}
+        return {"start":start,"end":end,"score":0,"path":[{"ep":characters[start]["episodes"][0], "chr":start}]}
     }
 
-    let dijkstra_context = {} //stores arrays in format [dist, prev, episode_id_where_connection_was_made, has_been_focal_node]
-
-    dijkstra_context[String(start)] = [0,-1,-1, false]
-    let node = start
-    let curdist = 0
-
+    if (blacklist.includes(start)){
+        console.log("Intended start point '"+characters[start]["name"]+"' was in blacklist; will skip.")
+        return {"start":start,"end":end,"score":-1,"path":null}
+    }
+        
     if (blacklist.includes(end)){
       console.log("Intended endpoint '"+characters[end]["name"]+"' was in blacklist; will skip.")
-      return {
-        "start":start,
-        "end":end,
-        "score":-1,
-        "path":"blacklist"
-      }
-    }
-    else {
-        while (!complete){
-            
-            //console.log("Focal node is "+String(node))
-
-            if (curdist == 0){
-              curdist = 1;
-            } else {
-              curdist = dijkstra_context[String(node)][0] + 1
-            }            
-            
-            let chars_to_expand = []
-
-            dijkstra_context[String(node)][3] = true
-
-            if (verbose){
-              console.log("Expanding "+characters[node]["name"])
-              console.log(dijkstra_context[node])
-            }            
-
-            let local_char_to_ep_map = {}
-
-            if (verbose){
-              console.log("Looking at their episodes...")
-            }
-
-            characters[node]["episodes"].forEach(episode => {
-              if (verbose){
-               // console.log("Looking at "+episodes[episode].episode)
-              }
-              episodes[episode]["chars"].forEach(c => {
-                if (verbose){
-                 // console.log("Taking stock of character "+characters[c].name);
-                 // console.log("Will we include it? Answer is: "+String(!Object.keys(dijkstra_context).includes(String(c)) && !chars_to_expand.includes(c)))
-                }
-                if (!Object.keys(dijkstra_context).includes(String(c)) && !chars_to_expand.includes(c)){
-                  local_char_to_ep_map[String(c)] = episode
-                  chars_to_expand.push(c)
-                }
-              })   
-            });
-            
-            if (verbose){
-              console.log("Registering nodes linked to them via their episodes...")
-            }
-
-            for (let i = 0; i < chars_to_expand.length; i++){
-              let char = chars_to_expand[i];
-              if (verbose){
-               // console.log("Registering "+characters[char].name)
-              }
-              if (!blacklist.includes(char)){
-                dijkstra_context[String(char)] = [curdist, node, local_char_to_ep_map[String(char)], false]
-                if (char == end){
-                  complete = true
-                  break
-                }
-              }
-            }
-
-            if (verbose){
-              console.log("Pool:")
-              console.log(Object.keys(dijkstra_context).map(x => characters[x].name))
-            }
-
-            if (complete){
-              break;
-            }              
-
-            let lowest_dist = 999999    
-
-            if (verbose){
-              console.log("Considering which to expand next...")
-            }            
-
-            node = null            
-
-            Object.keys(dijkstra_context).forEach(potential_next_node => {
-              node_object = dijkstra_context[potential_next_node];
-              if (verbose){
-                //console.log("Considering expanding to:")
-                //console.log(characters[parseInt(potential_next_node)].name);
-              }              
-              if (node_object[0] < lowest_dist && !node_object[3] && node_object[1] != -1 && !blacklist.includes(parseInt(potential_next_node))){
-                  node = parseInt(potential_next_node)
-                  lowest_dist = node_object[0]            
-              }                
-            });
-            
-            if (node == null){
-              console.log("Could not move to an adjacent node!")
-              break
-            }
-            
-            if (verbose){
-              console.log("Choosing " + characters[node].name +" due to lowest dist of "+lowest_dist)
-            }            
-          }
-    }
-
-    if (verbose){
-      console.log("Finished")
+      return {"start":start,"end":end,"score":-1,"path":null}
     }
     
+    let queue = [start]
+    let prevs = {}
+    let visited = [start]
+
+    //console.log(queue)
+
+    prevs[String(start)] = -1
+
+    while (!complete){
+
+        if (queue.length == 0){
+            console.log("Exhausted all node adjacencies!");
+            break;
+        }
+
+        let node = queue.shift()
+
+        //console.log("Expanding "+characters[node]["name"])
+
+        for (let i = 0; i < characters[node]["episodes"].length; i++){
+            let episode = characters[node]["episodes"][i]
+            //print("Looking at episode "+episodes[episode]["episode"])
+            for (let j = 0; j < episodes[episode]["chars"].length; j++){
+                let c = episodes[episode]["chars"][j]
+                if (!visited.includes(c) && !blacklist.includes(c)){
+                  prevs[String(c)] = node
+                  queue.push(c)
+                  visited.push(c)
+                  if (c == end){
+                    complete = true;
+                    break;
+                  }
+                } 
+              }
+            if (complete){
+              break;
+            }                
+        }
+    }
+
+    console.log("Finished BFS loop")
+
     if (!complete){
-      if (verbose){
-        let failure_text = "Could not link "+decodeName(characters[start]["name"]) + " to "+decodeName(characters[end]["name"])
-        console.log(failure_text)        
-      }
-      return {
-        "start":start,
-        "end":end,
-        "score":-1,
-        "path":null}
+      let failure_text = "Could not link "+decodeName(characters[start]["name"]) + " to "+decodeName(characters[end]["name"])
+      console.log(failure_text)        
+      return {"start":start,"end":end,"score":-1,"path":null}
     }
 
     let output = ""
     let char_id = end
-    node = dijkstra_context[String(char_id)]
     let first_time = true
 
     let score = 0
     let p = []
 
-    while (node[1] != -1){
-      p.push({"ep":node[2], "chr":char_id})
-      score += 1
-      output = " was in " + trim_story_url(decodeName(episodes[node[2]]["episode"])) + " with " + decodeName(characters[char_id]["name"]) + (first_time ? "" : ", who") + output
-      first_time = false
-      char_id = node[1]
-      node = dijkstra_context[String(char_id)]
-    }
+    while (prevs[String(char_id)] != -1){
+        let prev = prevs[String(char_id)]
+        let ep_id = get_episode_ID_in_common(prev, char_id)
         
+        p.push({"ep":ep_id, "chr":char_id})
+
+        score += 1
+        output = " was in " + trim_story_url(decodeName(episodes[ep_id]["episode"])) + " with " + decodeName(characters[char_id]["name"]) + (first_time ? "" : ", who") + output
+        first_time = false
+        char_id = prev
+    }
+
     output = decodeName(characters[start]["name"]) + output
 
     return {
@@ -400,7 +333,20 @@ function attemptToFindConnection(a, b, verbose){
         "end":end,
         "score":score,
         "path":p.reverse()
+    }
+}
+
+function get_episode_ID_in_common(c1, c2){
+  for (let i = 0; i < charmap.characters[c1]["episodes"].length; i++){
+    let episode = charmap.characters[c1]["episodes"][i];
+    for (let j = 0; j < charmap.characters[c2]["episodes"].length; j++){
+      let other_episode = charmap.characters[c2]["episodes"][j];
+      if (episode == other_episode){
+        return episode;
       }
+    }
+  }
+  return null
 }
 
 start();
