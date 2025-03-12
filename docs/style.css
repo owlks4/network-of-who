@@ -90,3 +90,16 @@ input[type=submit] {
   color:rgb(150,150,150);
   padding-bottom:0.35em;
 }
+
+.randomise {
+  opacity:0.95;
+  cursor:pointer;
+  position:absolute;
+  right:0;
+  font-size:1.25em;
+  padding: 0.15em 0.15em 0 0;
+}
+
+.randomise:hover {
+  filter:brightness(90%);
+}

@@ -19,18 +19,26 @@
         <div style="display:flex; flex-direction:column;align-items:center;text-align:left;">
           <div style="position:relative;text-align:left;min-width:20em;">
             <h3>Connect this character...</h3>
-            <input class="character-input" id="character-A" type="text" name="character-A">
+            <div style="position:relative;">
+              <input class="character-input" id="character-A" type="text" name="character-A">
+              <span title="Randomise character A" class="randomise" id="randomise-A">🎲</span>
+            </div>            
           </div>
           <div style="position:relative;text-align:left;min-width:20em;">
             <h3>To this character...</h3>
-            <input class="character-input" id="character-B" type="text" name="character-B">
+            <div style="position:relative;">
+              <input class="character-input" id="character-B" type="text" name="character-B">
+              <span title="Randomise character B" class="randomise" id="randomise-B">🎲</span>
+            </div>            
           </div>
         </div>
         <br>
-        <input type="checkbox" id="blacklist-the-doctor" name="blacklist-the-doctor"><label for="blacklist-the-doctor">Don't use the Doctor</label>
+        <input type="checkbox" id="blacklist-the-doctor" name="blacklist-the-doctor">
+        <label for="blacklist-the-doctor" style="user-select:none;">
+          Don't use the Doctor
+        </label>
         <br><br>
         <div style="text-align: center;">
-          <button type="button" id="random">Randomize</button>
           <button type="button" id="go">Find connection</button>         
         </div>
         <br>
