@@ -172,7 +172,7 @@ document.getElementById("dotd-disclaimer").onclick = ()=>{
 }
 
 document.getElementById("longest-connection-info").onclick = ()=>{
-  alert("When you exclude the Doctor, I think the longest connection between any two characters is 8, from:\n\n• any character exclusive to Class who was NOT in 'For Tonight we Might Die' (e.g. Dorothea Ames)\n\nTO\n\n• any character who only appeared in 'The Deadly Assassin' (e.g. Spandrell)\n\nAnother good shout is Mission to the Unknown, but it tends to have a slightly lower score due to some easy New Who connections to the 60s, like Ian Chesterton.\n\nWhen not using the Doctor, Mission to the Unknown is probably your best bet. As of writing this, you can even get 5th degree, Doctor-inclusive connections between Mission to the Unknown and Joy to the World, though I imagine that will change as the Fifteenth Doctor becomes better-connected.")
+  alert("When you exclude the Doctor, I think the longest connection between any two characters is 8, from:\n\n• Any character exclusive to Class who was NOT in 'For Tonight we Might Die' (e.g. Dorothea Ames)\n\nTO\n\n• Any character who only appeared in 'The Deadly Assassin' (e.g. Spandrell)\n\nAnother good shout is Mission to the Unknown, but it tends to have a slightly lower score due to some easy New Who connections to the 60s, like Ian Chesterton.\n\nWhen including the Doctor, Mission to the Unknown is probably your best bet. As of writing this, you can even get 5th degree, Doctor-inclusive connections between Mission to the Unknown and Joy to the World, though I imagine that will change as the Fifteenth Doctor becomes better-connected.")
 }
 
 async function start(){
