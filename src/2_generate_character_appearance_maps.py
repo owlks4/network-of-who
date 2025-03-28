@@ -12,7 +12,7 @@ OUTPUT_PATH = "charmap.json"
 WEB_OUTPUT_PATH = "../docs/charmap.json"
 
 if os.path.isfile(OUTPUT_PATH):
-    print(OUTPUT_PATH + " already exists. If you really do want to regenerate it, please delete it first, then run this script again. Aborting for now.")
+    print(OUTPUT_PATH + " already exists. If you really do want to regenerate it, please delete it first, then run this script again. Skipping step 2 for now.")
     exit()
 
 def get_most_recent_tag_of_type(start_point, target_tag_type):
@@ -46,21 +46,30 @@ def parse_cast_list(episode):
         if not dls == None:
             uls.extend(dls)
         
+        cast_section_identified = False
+
         for ul in uls:
             most_recent_h2 = get_most_recent_tag_of_type(ul, "h2")
             if most_recent_h2 == None:
                 continue
 
             most_recent_h2_contents = most_recent_h2.text_content().strip().lower()
+            most_recent_h2_first_child_contents = most_recent_h2[0].text_content().strip().lower() #they changed the wiki layout such that the cast h2 now contains two child spans, the first of which contains the text... but I'm not sure if EVERY cast h2 will be this way, so now I'm checking the child span in addition to the h2 itself...
 
-            if not (most_recent_h2_contents == "cast" or most_recent_h2_contents == "cast (voices)"): #the most recent h2 tag must be the Cast h2.
+            if not (most_recent_h2_contents == "cast" or most_recent_h2_contents == "cast (voices)") and not (most_recent_h2_first_child_contents == "cast" or most_recent_h2_first_child_contents == "cast (voices)"): #the most recent h2 tag must be the Cast h2.
                 continue
+        
+            cast_section_identified = True
                 
             most_recent_h3 = get_most_recent_tag_of_type(ul, "h3")
 
             if not most_recent_h3 == None:
                 most_recent_h3_contents = most_recent_h3.text_content().strip().lower()
-                if "uncredited" in most_recent_h3_contents or "notes" in most_recent_h3_contents: #it's a pity but we don't really want the uncredited cast, or we get random brigadier/susan cameos in the new series, in places where they shouldn't really count. Removing 'notes' gets around an error that was occurring on The Snowmen's page where BBC iPlayer was suddenly considered a character!
+                most_recent_h3_first_child_contents = most_recent_h3[0].text_content().strip().lower()
+                #it's a pity but we don't really want the uncredited cast, or we get random brigadier/susan cameos in the new series, in places where they shouldn't really count. Removing 'notes' gets around an error that was occurring on The Snowmen's page where BBC iPlayer was suddenly considered a character!
+                if "uncredited" in most_recent_h3_contents or "notes" in most_recent_h3_contents: 
+                    continue
+                if "uncredited" in most_recent_h3_first_child_contents or "notes" in most_recent_h3_first_child_contents:
                     continue
 
             for li in ul:
@@ -80,10 +89,13 @@ def parse_cast_list(episode):
                             character_links.append(link.split("/")[0].split("#")[0])
                     if not tag.tail == None and (" - " in tag.tail or "—" in tag.tail or "–" in tag.tail):
                         break
+
+        if not cast_section_identified:
+            print("It seems you might have encountered an error - the cast section was never identified. Is the link broken, or has the wiki changed the format of the page? ")
                     
     return character_links
 
-ROOT_URL = "https://mirror.tardis.wiki/wiki/"
+ROOT_URL = "https://tardis.wiki/wiki/"
 
 episode_links = open("episodes.txt", mode="r", encoding="utf-8").read().replace("\r","").strip().split("\n")
 
@@ -160,7 +172,7 @@ for episode in episode_links:
     elif "the_reign_of_terror" in episode_lower:
         cast.remove("Susan")
         cast.append("Susan_Foreman")
-    elif "survivors_of_the_flux" in episode_lower: #sorry brig fans... it's the tiniest of voice cameos and really shouldn't amount to a connection...
+    elif "survivors_of_the_flux" in episode_lower and "Alistair_Gordon_Lethbridge-Stewart" in cast: #sorry brig fans... it's the tiniest of voice cameos and really shouldn't amount to a connection...
         cast.remove("Alistair_Gordon_Lethbridge-Stewart")    
     elif "into_the_dalek" in episode_lower:
         cast.append("Rusty_(Into_the_Dalek)")

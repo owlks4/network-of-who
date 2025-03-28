@@ -345,9 +345,9 @@ print("\n")
 
 #print(get_verbose_report(find_connection_BFS(_START,_END)))
 
-#test_random_connections(200)
+test_random_connections(200)
 
-test_every_other_connection_from_character(characters.index(get_char_by_name("Dorothea_Ames")))
+#test_every_other_connection_from_character(characters.index(get_char_by_name("Goth")))
 
 def print_stats():
     print("\nTop 100 most traversed episodes after "+str(total_num_connections_completed)+" successful connections:\n")
@@ -359,6 +359,6 @@ def print_stats():
     print("\nMost traversed characters when traversing the watched episode ("+trim_story_url(fix_name(episodes[watched_episode_id]["episode"]))+"):")
     print(list(map(lambda x : fix_name(characters[int(x)]["name"]) + ": " + str(characters_accessed_when_traversing_the_watched_episode[x]), sorted(characters_accessed_when_traversing_the_watched_episode, reverse=True, key = lambda x : characters_accessed_when_traversing_the_watched_episode[x])[:100 if len(characters_accessed_when_traversing_the_watched_episode) >= 100 else len(characters_accessed_when_traversing_the_watched_episode)])))
 
-print_stats()
+#print_stats()
 
 #make_average_score_csv()

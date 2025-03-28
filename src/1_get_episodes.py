@@ -29,10 +29,10 @@ def parse_season_page(link):
 OUTPUT_PATH = "episodes.txt"
 
 if os.path.isfile(OUTPUT_PATH):
-    print(OUTPUT_PATH + " already exists. If you really do want to regenerate it, please delete it first, then run this script again. Aborting for now.")
+    print(OUTPUT_PATH + " already exists. If you really do want to regenerate it, please delete it first, then run this script again. Skipping step 1 for now.")
     exit()
 
-ROOT_URL = "https://mirror.tardis.wiki/wiki/"
+ROOT_URL = "https://tardis.wiki/wiki/"
 
 season_links = [ROOT_URL + "50th_Anniversary_Specials", ROOT_URL + "60th_Anniversary_Specials"]
 
