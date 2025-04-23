@@ -338,14 +338,14 @@ def randomise_start_and_end():
     _START = randint(0, len(characters) - 1)
     _END = randint(0, len(characters) - 1)
 
-_START = characters.index(get_char_by_name("Dorothea_Ames"))
-_END = characters.index(get_char_by_name("Tom_Barclay"))
+_START = characters.index(get_char_by_name("Lux_Imperator"))
+_END = characters.index(get_char_by_name("Cherry_Sunday"))
 
 print("\n")
 
-#print(get_verbose_report(find_connection_BFS(_START,_END)))
+print(get_verbose_report(find_connection_BFS(_START,_END)))
 
-test_random_connections(200)
+#test_random_connections(200)
 
 #test_every_other_connection_from_character(characters.index(get_char_by_name("Goth")))
 
