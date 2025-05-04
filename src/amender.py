@@ -6,7 +6,7 @@ print("Now running the amender (amends specific episodes and characters into cha
 charmap = json.loads(open("charmap.json", encoding="utf-8").read())
 
 def sanitise_name(original):
-    return unquote(original).replace("_"," ").strip()
+    return unquote(original).replace("(TV_story)","").replace("(tv_story)","").replace("_"," ").strip()
 
 def add_character(name):
     chara_already_exists = False
@@ -60,41 +60,41 @@ def add_episode(episode_name, character_names):
 
 print("Processing amendments...")
 
-add_episode("The Robot Revolution", [
+add_episode("Lucky_Day", [
     "Fifteenth_Doctor",
     "Belinda_Chandra",
-    "Alan_Budd",
-    "Kirby_Blake",
-    "Stefan_Haines",
-    "Receptionist_(The_Robot_Revolution)",
-    "Tombo",
-    "Sasha_55",
-    "Manny_(The_Robot_Revolution)",
-    "Scoley",
-    "Shago",
-    "Prime_Minister_(The_Robot_Revolution)"
-    ])
-
-add_episode("Lux", [
-    "Fifteenth_Doctor",
-    "Belinda_Chandra",
-    "Newsreader_(Lux)",
-    "Reginald_Pye",
-    "Tommy_Lee",
-    "Husband_(Lux)",
-    "Lux_Imperator",
-    "Sunshine_Sally",
-    "Logan_Cheever",
-    "Ren%C3%A9e_Lowenstein",
-    "Helen_Pye",
-    "Policeman_(Lux)",
-    "Hassan_Chowdry",
-    "Lizzie_Abel",
-    "Robyn_Gossage",
-    "Flood_(The_Church_on_Ruby_Road)"
+    "Ruby_Sunday",
+    "Conrad_Clark",
+    "Shreek",
+    "Jordan_Lang",
+    "Carla_Sunday",
+    "Cherry_Sunday",
+    "Louise_Miller",
+    "Elsa_(Lucky_Day)",
+    "Sparky_(Lucky_Day)",
+    "Jack_(Lucky_Day)",
+    "Michelle_(Lucky_Day)",
+    "Alfie_(Lucky_Day)",
+    "Derek_(Lucky_Day)",
+    "Kate_Stewart",
+    "Christofer_Ibrahim",
+    "Audrey_(Lucky_Day)",
+    "Shirley_Bingham",
+    "Trinity_Wells",
+    "Reeta_Chakrabarti_(in-universe)",
+    "Joel_Dommett_(in-universe)",
+    "Alex_Jones_(in-universe)",
+    "Influencer_1_(in-universe)",
+    "Influencer_2_(in-universe)",
+    "Influencer_3_(in-universe)",
+    "The_Vlinx",
+    "Mrs_Flood"
     ])
 
 print("Done")
+
+for episode in charmap["episodes"]:
+    episode["chars"].sort()
 
 json_string = json.dumps(charmap)
 open("charmap.json", encoding="utf-8", mode="w+").write(json_string)

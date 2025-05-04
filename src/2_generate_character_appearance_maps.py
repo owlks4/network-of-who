@@ -118,6 +118,8 @@ def process_characters(cast, episode_id):
             char = "Jo_Grant"
         if char == "Mel_Bush":
             char = "Melanie_Bush"
+        if char.lower() == "flood_(the_church_on_ruby_road)":
+            char = "Mrs Flood"
         if char == "Tegan":
             char = "Tegan_Jovanka"
         if char == "Turlough":
@@ -160,6 +162,8 @@ for episode in episode_links:
         if "The_General" in cast:
             cast.remove("The_General")
             cast.append("Eleventh_General")
+    elif episode_lower.split("_")[0] == "midnight":
+        cast.append("Midnight_Entity")
     elif "the_power_of_the_doctor" in episode_lower:
         cast.extend(["Guardians_of_the_Edge","Thirteenth_Doctor"])
         cast.remove("The_Doctor")

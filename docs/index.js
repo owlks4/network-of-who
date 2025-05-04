@@ -2,6 +2,21 @@ let character_names_blacklist = ["Dalek","Daleks","Cyberman","Cybermen","Cyber-L
 
 let optional_doctor_blacklist = ["The_Doctor","First_Doctor","Second_Doctor","Third_Doctor","Fourth_Doctor","Fifth_Doctor","Sixth_Doctor","Seventh_Doctor","Eighth_Doctor","War_Doctor","Ninth_Doctor","Tenth_Doctor","Eleventh_Doctor","Twelfth_Doctor","Thirteenth_Doctor","Fugitive_Doctor","Fourteenth_Doctor","Fifteenth_Doctor"]
 
+let temporary_blacklist = [];
+
+let companion_names = [
+"Susan_Foreman","Barbara_Wright","Ian_Chesterton","Vicki_Pallister",
+"Steven_Taylor","Katarina","Sara_Kingdom","Dodo_Chaplet","Polly_Wright",
+"Ben_Jackson","Jamie_McCrimmon","Victoria_Waterfield","Zoe_Heriot",
+"Alistair_Gordon_Lethbridge-Stewart","Liz_Shaw","Jo_Grant",
+"Sarah_Jane_Smith","Harry_Sullivan","Leela","K9","Romana_I","Romana_II",
+"Adric","Nyssa","Tegan_Jovanka","Vislor_Turlough","Kamelion","Peri_Brown",
+"Melanie_Bush","Ace","Rose_Tyler","Adam_Mitchell","Jack_Harkness",
+"Mickey_Smith","Donna_Noble","Martha_Jones","Wilfred_Mott","Amy_Pond",
+"Rory_Williams","River_Song","Clara_Oswald","Nardole","Bill_Potts",
+"Graham_O'Brien","Yasmin_Khan","Ryan_Sinclair","Dan_Lewis","Ruby_Sunday"
+]
+
 function decodeName(input){
   return decodeURIComponent(input).replaceAll("_"," ").trim();  
 }
@@ -180,6 +195,40 @@ async function start(){
   charmap = await response.json();
   establishAutocomplete(charaA, charmap.characters);
   establishAutocomplete(charaB, charmap.characters);
+  
+  return;
+  document.getElementById("blacklist-the-doctor").checked = true;
+  let svgParent = document.getElementById("svg-parent");
+  svgParent.appendChild(
+    makeD3Chart(
+      get_char_ID_by_name("Sarah_Jane_Smith"), companion_names.map((x)=>{return get_char_ID_by_name(x)})
+      )
+  );
+  svgParent.scrollTo(svgParent.scrollWidth / 2, svgParent.scrollHeight / 2);
+}
+
+let drag = (simulation) => {
+  function dragstarted(event, d) {
+    if (!event.active) simulation.alphaTarget(0.3).restart();
+    d.fx = d.x;
+    d.fy = d.y;
+  }
+  
+  function dragged(event, d) {
+    d.fx = event.x;
+    d.fy = event.y;
+  }
+  
+  function dragended(event, d) {
+    if (!event.active) simulation.alphaTarget(0);
+    d.fx = null;
+    d.fy = null;
+  }
+  
+  return d3.drag()
+      .on("start", dragstarted)
+      .on("drag", dragged)
+      .on("end", dragended);
 }
 
 function convertDecodedNamesToIDs(a,b){
@@ -218,15 +267,28 @@ function convertDecodedNamesToIDs(a,b){
 }
 
 function get_char_ID_by_name(name){
-  name = encodeURIComponent(name.replaceAll(" ","_"))
+  name = decodeName(name)
   let characters = charmap.characters;  
   for (let i = 0; i < characters.length; i++){
       let character = characters[i];
-      if (character.name == name){
+      if (decodeName(character.name) == name){
           return i;
         }      
   }
   return null
+}
+
+function createDeFactoBlacklist(){
+
+  let BL = character_names_blacklist.map((x) => {return get_char_ID_by_name(x)});
+
+  if (document.getElementById("blacklist-the-doctor").checked){
+    BL = BL.concat(optional_doctor_blacklist.map((x) => {return get_char_ID_by_name(x)}));
+  }
+
+  BL = BL.concat(temporary_blacklist)
+
+  return BL;
 }
 
 function attemptToFindConnection_BFS(start,end){
@@ -245,11 +307,7 @@ function attemptToFindConnection_BFS(start,end){
       return {"start":start,"end":end,"score":-1,"path":null};
     }
 
-    blacklist = character_names_blacklist.map((x) => {return get_char_ID_by_name(x)});
-
-    if (document.getElementById("blacklist-the-doctor").checked){
-      blacklist = blacklist.concat(optional_doctor_blacklist.map((x) => {return get_char_ID_by_name(x)}));
-    }
+    blacklist = createDeFactoBlacklist();
 
     if (start == end){        
         console.log("Start and end are the same person")
@@ -306,7 +364,7 @@ function attemptToFindConnection_BFS(start,end){
         }
     }
 
-    console.log("Finished BFS loop")
+    //console.log("Finished BFS loop")
 
     if (!complete){
       let failure_text = "Could not link "+decodeName(characters[start]["name"]) + " to "+decodeName(characters[end]["name"])
@@ -354,6 +412,293 @@ function get_episode_ID_in_common(c1, c2){
     }
   }
   return null
+}
+
+function makeD3Chart(id_of_starting_person, destination_ids){
+
+  alert("Fair warning: this graphing system was designed on top of the BFS function instead of being integrated into it, so there are a LOT of wasted calls.")
+
+  let data = {
+  name: decodeName(charmap.characters[id_of_starting_person]["name"]),
+  isEp: false,
+  children: [],
+  score: 0
+  }
+
+  let seen_chars = [id_of_starting_person];
+  let seen_eps = []
+  let char_objs_by_id = {};
+  char_objs_by_id[String(id_of_starting_person)] = data;
+  let episode_objs_by_id = {};
+
+  //get data
+
+  let MAX_LOOPS = 999999;
+
+  temporary_blacklist = [];
+  for (let i = 0; i < charmap.characters.length; i++){
+    if (i == id_of_starting_person){
+      continue;
+    }
+    if (!destination_ids.includes(i)){
+      temporary_blacklist.push(i);
+    }
+  }
+
+  let blacklist = createDeFactoBlacklist();
+
+  destination_ids.sort((a,b)=>{ //sort destinations so that we visit the ones with the most episodes under their belt first, it's not perfect because the BFS algorithm never sees this so won't abide by it, but this should still improve the efficiency of the tree very slightly
+    let epsA = charmap.characters[a].episodes.length;
+    let epsB = charmap.characters[b].episodes.length;
+    return epsA == epsB ? 0 : (epsA > epsB ? -1 : 1)
+  });
+
+  for (let index = 0; index < destination_ids.length; index++){
+
+    console.log(index+"/"+destination_ids.length)
+    
+    let c = destination_ids[index];
+
+    if (c == id_of_starting_person){
+      continue;
+    }
+    if (seen_chars.includes(c)){
+      continue;
+    }
+    if (blacklist.includes(c)){
+      continue;
+    }
+
+    let headOfLocalHierarchy = data;
+
+    let lowestScoreViaAnySeenCharacter = 9999999;
+
+    let thisCharName = decodeName(charmap.characters[c]["name"]);
+
+    let bestConnection = attemptToFindConnection_BFS(data.name, thisCharName);
+    let origBestScore = bestConnection.score;
+
+    if (bestConnection.path == null){
+      continue;
+    }
+
+    lowestScoreViaAnySeenCharacter = bestConnection.score;
+
+    let numUnseenCharactersInCurrentBestPath = 0;
+    bestConnection.path.forEach(step => {
+      if (!seen_chars.includes(step.chr)){
+        numUnseenCharactersInCurrentBestPath++;
+      }
+    });
+
+    let numUnseenEpisodesInCurrentBestPath = 0;
+    bestConnection.path.forEach(step => {
+      if (!seen_eps.includes(step.ep)){
+        numUnseenEpisodesInCurrentBestPath++;
+      }
+    });
+
+    for (let seenIndex = 0; seenIndex < seen_chars.length; seenIndex++){
+      let seenCharId = seen_chars[seenIndex];
+      let conn = attemptToFindConnection_BFS(decodeName(charmap.characters[seenCharId].name), thisCharName);
+
+      if (conn.path == null || conn.score == -1){
+        continue;
+      }
+
+      let potential_best_score = char_objs_by_id[String(seenCharId)].score + conn.score;
+
+      if (potential_best_score <= lowestScoreViaAnySeenCharacter){
+        if (potential_best_score == lowestScoreViaAnySeenCharacter){
+            let numUnseenCharactersInCandidatePath = 0; //we want to minimise this
+            conn.path.forEach(step => {
+              if (!seen_chars.includes(step.chr)){
+                numUnseenCharactersInCandidatePath++;
+              }
+            });
+            if (numUnseenCharactersInCandidatePath >= numUnseenCharactersInCurrentBestPath){ //if it's not an improvement, don't use it
+              continue;
+            }
+            let numUnseenEpisodesInCandidatePath = 0; //we want to minimise this
+            conn.path.forEach(step => {
+              if (!seen_eps.includes(step.ep)){
+                numUnseenEpisodesInCandidatePath++;
+              }
+            });
+            if (numUnseenEpisodesInCandidatePath >= numUnseenEpisodesInCurrentBestPath){ //if it's not an improvement, don't use it
+              continue;
+            }
+        }
+
+        bestConnection = conn;
+        lowestScoreViaAnySeenCharacter = potential_best_score;
+        headOfLocalHierarchy = char_objs_by_id[String(seenCharId)];
+        numUnseenCharactersInCurrentBestPath = 0;
+        bestConnection.path.forEach(step => {
+            if (!seen_chars.includes(step.chr)){
+              numUnseenCharactersInCurrentBestPath++;
+          }
+        });
+        numUnseenEpisodesInCurrentBestPath = 0;
+        bestConnection.path.forEach(step => {
+            if (!seen_eps.includes(step.ep)){
+              numUnseenEpisodesInCurrentBestPath++;
+          }
+        });
+      }
+    }
+
+    if (bestConnection.path == null){
+      console.log("No connection")
+      continue;
+    }
+
+    let reverseConnection = bestConnection.path.reverse();
+
+    let hierarchy = {};
+
+    for (let i = 0; i < reverseConnection.length; i++){
+        let step = reverseConnection[i];
+        
+        let chr_obj = null;
+
+        if (seen_chars.includes(step.chr)){
+          char_objs_by_id[String(step.chr)].children.push(hierarchy);
+          break;
+        } else {
+          seen_chars.push(step.chr)
+          chr_obj = {name: decodeName(charmap.characters[step.chr].name), isEp:false, children: Object.keys(hierarchy).length == 0 ? [] : [hierarchy]}
+          chr_obj.score = origBestScore - i;
+          char_objs_by_id[String(step.chr)] = chr_obj;
+          hierarchy = chr_obj;
+        }
+
+        let ep_obj = null;
+
+        if (seen_eps.includes(step.ep)){
+          episode_objs_by_id[String(step.ep)].children.push(hierarchy);   
+          break;
+        } else {
+          seen_eps.push(step.ep);
+          ep_obj = {name:decodeName(charmap.episodes[step.ep].episode), isEp:true, children: Object.keys(hierarchy).length == 0 ? [] : [hierarchy]};          
+          episode_objs_by_id[String(step.ep)] = ep_obj;
+          hierarchy = ep_obj;
+        }
+
+        if (i == reverseConnection.length - 1){
+          headOfLocalHierarchy.children.push(hierarchy);
+        }
+    }
+
+    if (index > MAX_LOOPS){
+      break;
+    }
+  }
+
+  temporary_blacklist = [];
+  console.log(data)
+
+    // Compute the graph and start the force simulation.
+    const root = d3.hierarchy(data);
+    const links = root.links();
+    const nodes = root.descendants();
+  
+    // Specify the chart’s dimensions.
+    const width = window.innerWidth * root.height / 5;
+    const height = window.innerWidth * root.height / 5;
+
+    const simulation = d3.forceSimulation(nodes)
+        .force("link", d3.forceLink(links).id(d => d.id).distance(0).strength(1))
+        .force("charge", d3.forceManyBody().strength(-6000))
+        .force("x", d3.forceX())
+        .force("y", d3.forceY());
+  
+    // Create the container SVG.
+    const svg = d3.create("svg")
+        .attr("width", width)
+        .attr("height", height)
+        .attr("viewBox", [-width / 2, -height / 2, width, height])
+        .attr("style", "font-size:1.5em;font-weight:bold;");
+  
+    // Append links.
+    const link = svg.append("g")
+        .attr("stroke", "#999")
+        .attr("stroke-opacity", 0.6)
+      .selectAll("line")
+      .data(links)
+      .join("line");
+  
+    // Append nodes.
+    const node = svg
+    .append("g")
+    .selectAll("g")
+    .data(nodes)
+    .join("g")
+    .call(drag(simulation));
+
+  node.append("circle")
+    .attr("r", 10)
+    .attr("fill", (d)=>{return d.data.isEp ? "white" : "black"})
+    .attr("stroke", (d)=>{return d.data.isEp ? "black" : "white"});
+  
+  node.append("text")
+    .text(d => {let removeParenttheses = d.data.name.split("(")[0]; return removeParenttheses.includes(" ") ? removeParenttheses.split(" ")[0] : "";})
+    .attr("transform", (d) => `translate(${0} ${-50})`)
+    .attr("style", (d)=>"white-space:break-spaces; user-select:none;text-transform:"+(d.data.isEp ? "uppercase" : "inherit"))
+    .attr("fill", "black")
+    .attr("stroke", "white")
+    .attr("text-anchor","middle");
+
+  node.append("text")
+    .text(d => {let removeParenttheses = d.data.name.split("(")[0]; return removeParenttheses.substring(d.data.name.indexOf(' ')+1)})
+    .attr("transform", (d) => `translate(${0} ${-25})`)
+    .attr("style", (d)=>"white-space:break-spaces; user-select:none;text-transform:"+(d.data.isEp ? "uppercase" : "inherit"))
+    .attr("fill", "black")
+    .attr("stroke", "white")
+    .attr("text-anchor","middle");
+  
+    const endTime = Date.now() + 2500;
+
+    function moveToBack(item, parent){
+      var firstChild = parent.firstChild; 
+          if (firstChild) { 
+            parent.insertBefore(item, firstChild); 
+          } 
+    }
+
+    simulation.on("tick", () => {
+      if (Date.now() >= endTime){
+        simulation.stop();
+
+        let flattenedData = []
+
+        root.each((n)=>flattenedData.push([n.x,n.y]));
+
+        let delaunay = d3.Delaunay.from(flattenedData)
+        let voronoi = delaunay.voronoi([-width, -height, width, height])
+        
+        for (let i = 0; i < flattenedData.length; i++) {
+          let item = svg.append("path")
+          .attr("fill", "white")
+          .attr("stroke", "#ccc")
+          .attr("d", voronoi.renderCell(i));
+          moveToBack(item, svg);
+        }
+        
+        let pts = svg.append("path")
+        .attr("d", delaunay.renderPoints(null, 2));
+        moveToBack(pts, svg);
+
+        svg.selectAll("g").raise()
+      }
+      link
+          .attr("x1", d => d.source.x)
+          .attr("y1", d => d.source.y)
+          .attr("x2", d => d.target.x)
+          .attr("y2", d => d.target.y);
+      node.attr("transform", (d) => `translate(${d.x} ${d.y})`);
+    });
+    return svg.node();
 }
 
 start();
