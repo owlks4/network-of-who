@@ -41,10 +41,6 @@ function isVowel(letter){
   }
 }
 
-if (window.innerWidth < 1000){
-  document.getElementById("title").innerHTML = "Six Degrees of<br>Doctor Who"
-}
-
 function get_verbose_report(connection){
   let characters = charmap.characters;  
   let episodes = charmap.episodes;
@@ -195,13 +191,17 @@ async function start(){
   charmap = await response.json();
   establishAutocomplete(charaA, charmap.characters);
   establishAutocomplete(charaB, charmap.characters);
-  
+
   return;
+  
   document.getElementById("blacklist-the-doctor").checked = true;
   let svgParent = document.getElementById("svg-parent");
+  svgParent.style= "";
   svgParent.appendChild(
     makeD3Chart(
-      get_char_ID_by_name("Sarah_Jane_Smith"), companion_names.map((x)=>{return get_char_ID_by_name(x)})
+      get_char_ID_by_name("Susan_Foreman"),
+      companion_names.map((x)=>{return get_char_ID_by_name(x)}),
+      true
       )
   );
   svgParent.scrollTo(svgParent.scrollWidth / 2, svgParent.scrollHeight / 2);
@@ -236,9 +236,12 @@ function convertDecodedNamesToIDs(a,b){
 
   let aFound = false;
   let bFound = false;
-
-  a = a.toLowerCase();
-  b = b.toLowerCase();
+  
+  a = a == null ? null : a.toLowerCase();
+  
+  if (b != -2){
+    b = b.toLowerCase();
+  }
 
   for (let i = 0; i < charas.length; i++){ //reassociate the clean, autocompleted versions of the character names with their characters again
     let decodedName = decodeName(charas[i].name).toLowerCase();
@@ -260,7 +263,7 @@ function convertDecodedNamesToIDs(a,b){
   }
 
   if (!bFound){
-    b = -1;
+    b = b == -2 ? -2 : -1;  //-2 is for finding a minimum spanning tree
   }
 
   return [a,b];
@@ -291,8 +294,16 @@ function createDeFactoBlacklist(){
   return BL;
 }
 
+let MST_chars_and_parent_eps = {}
+let MST_seen_eps = [];
+let MST_eps_and_parent_chars = {}
+
 function attemptToFindConnection_BFS(start,end){
     let complete = false;
+
+    MST_chars_and_parent_eps = {};
+    MST_seen_eps = [];
+    MST_eps_and_parent_chars = {}
 
     let decoded = convertDecodedNamesToIDs(start,end);
 
@@ -345,13 +356,20 @@ function attemptToFindConnection_BFS(start,end){
 
         for (let i = 0; i < characters[node]["episodes"].length; i++){
             let episode = characters[node]["episodes"][i]
+            if (end == -2 && !MST_seen_eps.includes(episode)){
+              MST_eps_and_parent_chars[String(episode)] = node;
+              MST_seen_eps.push(episode);
+            }
             //print("Looking at episode "+episodes[episode]["episode"])
             for (let j = 0; j < episodes[episode]["chars"].length; j++){
                 let c = episodes[episode]["chars"][j]
                 if (!visited.includes(c) && !blacklist.includes(c)){
+                  if (end == -2 && !blacklist.includes(c)){
+                    MST_chars_and_parent_eps[String(c)] = episode;
+                  }
                   prevs[String(c)] = node
                   queue.push(c)
-                  visited.push(c)
+                  visited.push(c)                  
                   if (c == end){
                     complete = true;
                     break;
@@ -367,9 +385,15 @@ function attemptToFindConnection_BFS(start,end){
     //console.log("Finished BFS loop")
 
     if (!complete){
-      let failure_text = "Could not link "+decodeName(characters[start]["name"]) + " to "+decodeName(characters[end]["name"])
-      console.log(failure_text)        
-      return {"start":start,"end":end,"score":-1,"path":null}
+      if (end == -2){
+        console.log("Minimum spanning tree data created in MST_chars_and_parent_eps")
+        console.log(MST_chars_and_parent_eps)
+        return {"start":start,"end":end,"score":-1,"path":null}
+      } else {
+        let failure_text = "Could not link "+decodeName(characters[start]["name"]) + " to "+decodeName(characters[end]["name"])
+        console.log(failure_text)        
+        return {"start":start,"end":end,"score":-1,"path":null}
+      }
     }
 
     let output = ""
@@ -414,15 +438,41 @@ function get_episode_ID_in_common(c1, c2){
   return null
 }
 
-function makeD3Chart(id_of_starting_person, destination_ids){
+function getColourForEpWithId(id){
+  
+    let episode = charmap.episodes[id];
 
-  alert("Fair warning: this graphing system was designed on top of the BFS function instead of being integrated into it, so there are a LOT of wasted calls.")
+    let year = episode["y"];
+
+    if (year == null){
+      return "white";
+    }
+
+    switch(year.substring(0,3)){
+        case "196":
+          return "cyan";
+        case "197":
+          return "limegreen";
+        case "198":
+          return "yellow";
+        case "200":
+          return "orange"
+        case "201":
+          return "red";
+        case "202":
+          return "magenta";
+        default:
+          return "white";
+    }
+}
+
+function makeD3Chart(id_of_starting_person, whitelist, use_whitelist){
 
   let data = {
   name: decodeName(charmap.characters[id_of_starting_person]["name"]),
+  id:id_of_starting_person,
   isEp: false,
-  children: [],
-  score: 0
+  children: []
   }
 
   let seen_chars = [id_of_starting_person];
@@ -433,167 +483,64 @@ function makeD3Chart(id_of_starting_person, destination_ids){
 
   //get data
 
-  let MAX_LOOPS = 999999;
-
   temporary_blacklist = [];
-  for (let i = 0; i < charmap.characters.length; i++){
-    if (i == id_of_starting_person){
-      continue;
-    }
-    if (!destination_ids.includes(i)){
-      temporary_blacklist.push(i);
-    }
-  }
 
-  let blacklist = createDeFactoBlacklist();
-
-  destination_ids.sort((a,b)=>{ //sort destinations so that we visit the ones with the most episodes under their belt first, it's not perfect because the BFS algorithm never sees this so won't abide by it, but this should still improve the efficiency of the tree very slightly
-    let epsA = charmap.characters[a].episodes.length;
-    let epsB = charmap.characters[b].episodes.length;
-    return epsA == epsB ? 0 : (epsA > epsB ? -1 : 1)
-  });
-
-  for (let index = 0; index < destination_ids.length; index++){
-
-    console.log(index+"/"+destination_ids.length)
-    
-    let c = destination_ids[index];
-
-    if (c == id_of_starting_person){
-      continue;
-    }
-    if (seen_chars.includes(c)){
-      continue;
-    }
-    if (blacklist.includes(c)){
-      continue;
-    }
-
-    let headOfLocalHierarchy = data;
-
-    let lowestScoreViaAnySeenCharacter = 9999999;
-
-    let thisCharName = decodeName(charmap.characters[c]["name"]);
-
-    let bestConnection = attemptToFindConnection_BFS(data.name, thisCharName);
-    let origBestScore = bestConnection.score;
-
-    if (bestConnection.path == null){
-      continue;
-    }
-
-    lowestScoreViaAnySeenCharacter = bestConnection.score;
-
-    let numUnseenCharactersInCurrentBestPath = 0;
-    bestConnection.path.forEach(step => {
-      if (!seen_chars.includes(step.chr)){
-        numUnseenCharactersInCurrentBestPath++;
-      }
-    });
-
-    let numUnseenEpisodesInCurrentBestPath = 0;
-    bestConnection.path.forEach(step => {
-      if (!seen_eps.includes(step.ep)){
-        numUnseenEpisodesInCurrentBestPath++;
-      }
-    });
-
-    for (let seenIndex = 0; seenIndex < seen_chars.length; seenIndex++){
-      let seenCharId = seen_chars[seenIndex];
-      let conn = attemptToFindConnection_BFS(decodeName(charmap.characters[seenCharId].name), thisCharName);
-
-      if (conn.path == null || conn.score == -1){
+  if (use_whitelist){
+    for (let i = 0; i < charmap.characters.length; i++){
+      if (i == id_of_starting_person){
         continue;
       }
-
-      let potential_best_score = char_objs_by_id[String(seenCharId)].score + conn.score;
-
-      if (potential_best_score <= lowestScoreViaAnySeenCharacter){
-        if (potential_best_score == lowestScoreViaAnySeenCharacter){
-            let numUnseenCharactersInCandidatePath = 0; //we want to minimise this
-            conn.path.forEach(step => {
-              if (!seen_chars.includes(step.chr)){
-                numUnseenCharactersInCandidatePath++;
-              }
-            });
-            if (numUnseenCharactersInCandidatePath >= numUnseenCharactersInCurrentBestPath){ //if it's not an improvement, don't use it
-              continue;
-            }
-            let numUnseenEpisodesInCandidatePath = 0; //we want to minimise this
-            conn.path.forEach(step => {
-              if (!seen_eps.includes(step.ep)){
-                numUnseenEpisodesInCandidatePath++;
-              }
-            });
-            if (numUnseenEpisodesInCandidatePath >= numUnseenEpisodesInCurrentBestPath){ //if it's not an improvement, don't use it
-              continue;
-            }
-        }
-
-        bestConnection = conn;
-        lowestScoreViaAnySeenCharacter = potential_best_score;
-        headOfLocalHierarchy = char_objs_by_id[String(seenCharId)];
-        numUnseenCharactersInCurrentBestPath = 0;
-        bestConnection.path.forEach(step => {
-            if (!seen_chars.includes(step.chr)){
-              numUnseenCharactersInCurrentBestPath++;
-          }
-        });
-        numUnseenEpisodesInCurrentBestPath = 0;
-        bestConnection.path.forEach(step => {
-            if (!seen_eps.includes(step.ep)){
-              numUnseenEpisodesInCurrentBestPath++;
-          }
-        });
+      if (!whitelist.includes(i)){
+        temporary_blacklist.push(i);
       }
     }
-
-    if (bestConnection.path == null){
-      console.log("No connection")
-      continue;
-    }
-
-    let reverseConnection = bestConnection.path.reverse();
-
-    let hierarchy = {};
-
-    for (let i = 0; i < reverseConnection.length; i++){
-        let step = reverseConnection[i];
-        
-        let chr_obj = null;
-
-        if (seen_chars.includes(step.chr)){
-          char_objs_by_id[String(step.chr)].children.push(hierarchy);
-          break;
-        } else {
-          seen_chars.push(step.chr)
-          chr_obj = {name: decodeName(charmap.characters[step.chr].name), isEp:false, children: Object.keys(hierarchy).length == 0 ? [] : [hierarchy]}
-          chr_obj.score = origBestScore - i;
-          char_objs_by_id[String(step.chr)] = chr_obj;
-          hierarchy = chr_obj;
-        }
-
-        let ep_obj = null;
-
-        if (seen_eps.includes(step.ep)){
-          episode_objs_by_id[String(step.ep)].children.push(hierarchy);   
-          break;
-        } else {
-          seen_eps.push(step.ep);
-          ep_obj = {name:decodeName(charmap.episodes[step.ep].episode), isEp:true, children: Object.keys(hierarchy).length == 0 ? [] : [hierarchy]};          
-          episode_objs_by_id[String(step.ep)] = ep_obj;
-          hierarchy = ep_obj;
-        }
-
-        if (i == reverseConnection.length - 1){
-          headOfLocalHierarchy.children.push(hierarchy);
-        }
-    }
-
-    if (index > MAX_LOOPS){
-      break;
-    }
   }
+  attemptToFindConnection_BFS(data.name, -2); //running in MST mode
+  Object.keys(MST_chars_and_parent_eps).forEach(charId => {
+
+    let char_obj = null;
+    if (seen_chars.includes(parseInt(charId))){
+      char_obj = char_objs_by_id[charId];
+    } else {
+      seen_chars.push(parseInt(charId));
+      char_obj = {name: decodeName(charmap.characters[parseInt(charId)].name), id:parseInt(charId), isEp:false, children:[]}
+      char_objs_by_id[charId] = char_obj;
+    }
+
+    let ep_obj = null;
+    let epId = parseInt(MST_chars_and_parent_eps[charId])
+    if (seen_eps.includes(epId)){
+      ep_obj = episode_objs_by_id[String(epId)];
+    } else {
+      seen_eps.push(epId)
+      ep_obj = {name: decodeName(charmap.episodes[epId].episode), id:epId, isEp:true, children:[]}
+      episode_objs_by_id[String(epId)] = ep_obj;
+    }
+
+    console.log(char_obj.name + " " + ep_obj.name)
+
+    if (!ep_obj.children.includes(char_obj)){
+      ep_obj.children.push(char_obj)
+    }
+
+    let parent_charId_of_episode = null;
+
+    if (parseInt(charId) == id_of_starting_person){
+      parent_charId_of_episode = id_of_starting_person;
+    } else {
+      parent_charId_of_episode = MST_eps_and_parent_chars[epId];
+    }
+
+    if (seen_chars.includes(parent_charId_of_episode)){ //as an addendum, if seen_chars includes the episode's parent character, set that characters as the episode's parent if it exists and create it if it doesn't
+      if (!char_objs_by_id[String(parent_charId_of_episode)].children.includes(ep_obj)){
+        char_objs_by_id[String(parent_charId_of_episode)].children.push(ep_obj)
+      }  
+    } else {
+        seen_chars.push(parent_charId_of_episode)
+        char_objs_by_id[String(parent_charId_of_episode)] = {name: decodeName(charmap.characters[parseInt(parent_charId_of_episode)].name), id:parent_charId_of_episode, isEp:false, children:[ep_obj]}
+    }
+    
+  });
 
   temporary_blacklist = [];
   console.log(data)
@@ -604,8 +551,8 @@ function makeD3Chart(id_of_starting_person, destination_ids){
     const nodes = root.descendants();
   
     // Specify the chart’s dimensions.
-    const width = window.innerWidth * root.height / 5;
-    const height = window.innerWidth * root.height / 5;
+    const width = window.innerWidth * (root.height / 1.5);
+    const height = window.innerWidth * (root.height / 1.5);
 
     const simulation = d3.forceSimulation(nodes)
         .force("link", d3.forceLink(links).id(d => d.id).distance(0).strength(1))
@@ -666,20 +613,32 @@ function makeD3Chart(id_of_starting_person, destination_ids){
           } 
     }
 
+    let dataColours = [];
+
+    root.each((n)=>{
+      if (n.data.isEp){
+        dataColours.push(getColourForEpWithId(n.data.id));
+      } else if (n.parent != null) {
+        dataColours.push(getColourForEpWithId(n.parent.data.id));
+      } else {
+        dataColours.push("white")
+      }
+    });
+
     simulation.on("tick", () => {
       if (Date.now() >= endTime){
-        simulation.stop();
-
+        simulation.stop()
         let flattenedData = []
-
-        root.each((n)=>flattenedData.push([n.x,n.y]));
+        root.each((n)=>{
+          flattenedData.push([n.x,n.y]);
+        });
 
         let delaunay = d3.Delaunay.from(flattenedData)
         let voronoi = delaunay.voronoi([-width, -height, width, height])
         
         for (let i = 0; i < flattenedData.length; i++) {
           let item = svg.append("path")
-          .attr("fill", "white")
+          .attr("fill", dataColours[i])
           .attr("stroke", "#ccc")
           .attr("d", voronoi.renderCell(i));
           moveToBack(item, svg);

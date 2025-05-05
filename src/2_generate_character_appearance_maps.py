@@ -6,7 +6,7 @@ import json
 import os
 from random import shuffle
 
-FOREVER_BLACKLIST = ["", "mr", "mrs", "miss", "dancer", "piano", "music", "silurian", "sontaran","sea devil", "karen gillan", "robot", "dwm_284", "doctor_who_and_the_silurians_uncredited_cast", "chancellor", "lord_president", "roy_skelton", "major", "captain", "brigadier", "professor", "lieutenant", "dalek_operator", "colonel", "commander", "trap_street", "covent_garden", "william_hartnell","patrick_troughton","jon_pertwee","tom_baker","peter_davison","colin_baker","sylvester_mccoy","paul_mcgann","john_hurt","christopher_eccleston","david_tennant","matt_smith","peter_capaldi","jodie_whittaker","jo_martin","ncuti_gatwa", "gabriel_woolf", "nicholas_briggs", "paul_kasey"] #some items I was having trouble with due to non-standard listing in the cast list, often due to being voice roles or 'introducing...'
+FOREVER_BLACKLIST = ["", "mr", "mrs", "miss", "dr", "doctor", "dancer", "piano", "music", "silurian", "sontaran","sea devil", "karen gillan", "robot", "dwm_284", "doctor_who_and_the_silurians_uncredited_cast", "chancellor", "lord_president", "roy_skelton", "major", "captain", "brigadier", "professor", "lieutenant", "dalek_operator", "colonel", "commander", "trap_street", "covent_garden", "william_hartnell","patrick_troughton","jon_pertwee","tom_baker","peter_davison","colin_baker","sylvester_mccoy","paul_mcgann","john_hurt","christopher_eccleston","david_tennant","matt_smith","peter_capaldi","jodie_whittaker","jo_martin","ncuti_gatwa", "gabriel_woolf", "nicholas_briggs", "paul_kasey"] #some items I was having trouble with due to non-standard listing in the cast list, often due to being voice roles or 'introducing...'
 
 OUTPUT_PATH = "charmap.json"
 WEB_OUTPUT_PATH = "../docs/charmap.json"
@@ -30,6 +30,10 @@ def get_most_recent_tag_of_type(start_point, target_tag_type):
         return None
     return parent[index]
 
+
+def format_release(s):
+    return s.replace("/wiki/","").replace("_(releases)","")
+
 def parse_cast_list(episode):
     response = requests.get(ROOT_URL + episode)
     character_links = []
@@ -39,6 +43,22 @@ def parse_cast_list(episode):
         uls = tree.findall(".//ul")
         ps = tree.findall(".//p")
         dls = tree.findall(".//dl")
+        airdate_candidates_in_infobox = tree.xpath(".//*[contains(@class, 'portable-infobox')]")
+        if len(airdate_candidates_in_infobox) > 0:
+            airdate_candidates_in_infobox = airdate_candidates_in_infobox[0].xpath(".//div[contains(@class, 'pi-data-value')]//a[@href]")
+        else:
+            airdate_candidates_in_infobox = []
+        
+        airing_year = None
+
+        for airdate_candidate in airdate_candidates_in_infobox:
+            if "(releases)" in airdate_candidate.get("href"):
+                formatted_release = format_release(airdate_candidate.get("href"))
+                if len(formatted_release) == 4:
+                    airing_year = formatted_release
+                    break
+
+        print(airing_year)
 
         if not ps == None:
             uls.extend(ps)
@@ -93,7 +113,7 @@ def parse_cast_list(episode):
         if not cast_section_identified:
             print("It seems you might have encountered an error - the cast section was never identified. Is the link broken, or has the wiki changed the format of the page? ")
                     
-    return character_links
+    return {"year":airing_year, "cast":character_links}
 
 ROOT_URL = "https://tardis.wiki/wiki/"
 
@@ -112,6 +132,7 @@ def process_characters(cast, episode_id):
         cast.remove("")
     for i in range(len(cast)):
         char = cast[i]
+        char = char.replace("&action=edit","").replace("&redlink=1","")
         if char == "Kate_Lethbridge-Stewart":
             char = "Kate_Stewart"
         if char == "Jo_Jones":
@@ -151,10 +172,11 @@ num_complete = 0
 out_of_str = "/"+str(len(episode_links))
 
 for episode in episode_links:
-    cast = parse_cast_list(episode)
+    ep_obj = parse_cast_list(episode)    
+    cast = ep_obj["cast"]
     episode_lower = episode.lower()
     if "the_day_of_the_doctor" in episode_lower:
-        cast.extend(["The_Curator_(The_Day_of_the_Doctor)","War_Doctor","Ninth_Doctor","Tenth_Doctor","Eleventh_Doctor","Twelfth_Doctor"]) #after much debate I've decided not to include the classic doctors in DOTD - it's a good enough connection node as it is without pretending that the cameos really amount to those characters being present! I doubt it will actually harm many scores, and will lead to more satisfying connection paths than 'Third Doctor was in Day of the Doctor' when his appearance is so fleeting and solely using archive footage.
+        cast.extend(["The_Curator_(The_Day_of_the_Doctor)","War_Doctor","Tenth_Doctor","Eleventh_Doctor","Twelfth_Doctor"]) #after much debate I've decided not to include the classic doctors in DOTD - it's a good enough connection node as it is without pretending that the cameos really amount to those characters being present! I doubt it will actually harm many scores, and will lead to more satisfying connection paths than 'Third Doctor was in Day of the Doctor' when his appearance is so fleeting and solely using archive footage.
         cast.remove("The_Doctor")
         if "First_Doctor" in cast: # From John Guilor's voice credit as the first doctor. As discussed above I don't really think this should be included as an appearance of the first doctor because it's so fleeting and cameo-like, even if it's supposed to be a novel appearance.
             cast.remove("First_Doctor")
@@ -180,7 +202,7 @@ for episode in episode_links:
         cast.remove("Alistair_Gordon_Lethbridge-Stewart")    
     elif "into_the_dalek" in episode_lower:
         cast.append("Rusty_(Into_the_Dalek)")
-    episode_charmaps.append({"episode":episode, "chars":process_characters(list(dict.fromkeys(cast)), episode_links.index(episode))}) #the list(dict.fromkeys()) part is there to remove duplicates in the list (e.g. if a character is repeated twice in the same cast list for whatever reason (e.g. two daleks) we only need to record one instance)    
+    episode_charmaps.append({"episode":episode, "y":ep_obj["year"], "chars":process_characters(list(dict.fromkeys(cast)), episode_links.index(episode))}) #the list(dict.fromkeys()) part is there to remove duplicates in the list (e.g. if a character is repeated twice in the same cast list for whatever reason (e.g. two daleks) we only need to record one instance)    
     print(str(num_complete)+out_of_str)
     num_complete += 1
     time.sleep(1)

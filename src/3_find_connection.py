@@ -60,7 +60,6 @@ def print_characters_for_episode(episode):
     print("\n"+fix_name(trim_story_url(episode["episode"]))+"'s characters:\n")
     print(list(map(lambda x : characters[x]["name"], episode["chars"])))
 
-
 def get_report(connection):
     return fix_name(characters[connection["start"]]["name"]) +" -> "+ fix_name(characters[connection["end"]]["name"]) + ": "+str(connection["score"])
 
@@ -332,7 +331,17 @@ def test_every_other_connection_from_character(id):
 
     print("\nTop 100 highest scoring connections for them after "+str(total_num_connections_completed)+" successful connections:\n")
     print(list(map(lambda x : fix_name(characters[int(x)]["name"]) + ": " + str(d[x]), sorted(d, reverse=True, key = lambda x : d[x])))[:100 if total_num_connections_completed >= 100 else total_num_connections_completed])
-    
+
+def print_stats():
+    print("\nTop 100 most traversed episodes after "+str(total_num_connections_completed)+" successful connections:\n")
+    print(list(map(lambda x : trim_story_url(fix_name(episodes[int(x)]["episode"])) + ": " + str(episodes_and_traversals[x]), sorted(episodes_and_traversals, reverse=True, key = lambda x : episodes_and_traversals[x])))[:100 if total_num_connections_completed >= 100 else total_num_connections_completed])
+
+    print("\nTop 100 most traversed characters after "+str(total_num_connections_completed)+" successful connections:\n")
+    print(list(map(lambda x : fix_name(characters[int(x)]["name"]) + ": " + str(characters_and_traversals[x]), sorted(characters_and_traversals, reverse=True, key = lambda x : characters_and_traversals[x])))[:100 if total_num_connections_completed >= 100 else total_num_connections_completed])
+
+    print("\nMost traversed characters when traversing the watched episode ("+trim_story_url(fix_name(episodes[watched_episode_id]["episode"]))+"):")
+    print(list(map(lambda x : fix_name(characters[int(x)]["name"]) + ": " + str(characters_accessed_when_traversing_the_watched_episode[x]), sorted(characters_accessed_when_traversing_the_watched_episode, reverse=True, key = lambda x : characters_accessed_when_traversing_the_watched_episode[x])[:100 if len(characters_accessed_when_traversing_the_watched_episode) >= 100 else len(characters_accessed_when_traversing_the_watched_episode)])))
+
 def randomise_start_and_end():
     global _START, _END
     _START = randint(0, len(characters) - 1)
@@ -345,20 +354,10 @@ print("\n")
 
 print(get_verbose_report(find_connection_BFS(_START,_END)))
 
-#test_random_connections(200)
+test_random_connections(100)
 
-#test_every_other_connection_from_character(characters.index(get_char_by_name("Goth")))
+#test_every_other_connection_from_character(characters.index(get_char_by_name("Spandrell")))
 
-def print_stats():
-    print("\nTop 100 most traversed episodes after "+str(total_num_connections_completed)+" successful connections:\n")
-    print(list(map(lambda x : trim_story_url(fix_name(episodes[int(x)]["episode"])) + ": " + str(episodes_and_traversals[x]), sorted(episodes_and_traversals, reverse=True, key = lambda x : episodes_and_traversals[x])))[:100 if total_num_connections_completed >= 100 else total_num_connections_completed])
-
-    print("\nTop 100 most traversed characters after "+str(total_num_connections_completed)+" successful connections:\n")
-    print(list(map(lambda x : fix_name(characters[int(x)]["name"]) + ": " + str(characters_and_traversals[x]), sorted(characters_and_traversals, reverse=True, key = lambda x : characters_and_traversals[x])))[:100 if total_num_connections_completed >= 100 else total_num_connections_completed])
-
-    print("\nMost traversed characters when traversing the watched episode ("+trim_story_url(fix_name(episodes[watched_episode_id]["episode"]))+"):")
-    print(list(map(lambda x : fix_name(characters[int(x)]["name"]) + ": " + str(characters_accessed_when_traversing_the_watched_episode[x]), sorted(characters_accessed_when_traversing_the_watched_episode, reverse=True, key = lambda x : characters_accessed_when_traversing_the_watched_episode[x])[:100 if len(characters_accessed_when_traversing_the_watched_episode) >= 100 else len(characters_accessed_when_traversing_the_watched_episode)])))
-
-#print_stats()
+print_stats()
 
 #make_average_score_csv()

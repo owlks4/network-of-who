@@ -104,3 +104,8 @@ input[type=submit] {
 .randomise:hover {
   filter:brightness(90%);
 }
+
+#svg-parent {
+  overflow:scroll;
+  -webkit-overflow-scrolling:touch;
+}
