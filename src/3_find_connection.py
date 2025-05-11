@@ -354,9 +354,9 @@ print("\n")
 
 print(get_verbose_report(find_connection_BFS(_START,_END)))
 
-test_random_connections(100)
+#test_random_connections(100)
 
-#test_every_other_connection_from_character(characters.index(get_char_by_name("Spandrell")))
+test_every_other_connection_from_character(characters.index(get_char_by_name("Belinda_Chandra")))
 
 print_stats()
 

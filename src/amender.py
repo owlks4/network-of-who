@@ -28,7 +28,7 @@ def add_character(name):
         charmap["characters"].append(existing)
         return existing
 
-def add_episode(episode_name, character_names):
+def add_episode(episode_name, year, character_names):
     sanitised_episode_name = sanitise_name(episode_name)
 
     episode = {"episode":episode_name.replace(" ","_"), "chars":[]}
@@ -43,6 +43,8 @@ def add_episode(episode_name, character_names):
             episode_id = charmap["episodes"].index(existing_episode)
             episode_has_yet_to_be_appended = False
     
+    episode["y"] = str(year)
+
     for character_name in character_names:
         chara_object = add_character(character_name)
         if not episode_id in chara_object["episodes"]:
@@ -60,35 +62,23 @@ def add_episode(episode_name, character_names):
 
 print("Processing amendments...")
 
-add_episode("Lucky_Day", [
+add_episode("The_Story_%26_the_Engine_(TV_story)", "2025", [
     "Fifteenth_Doctor",
     "Belinda_Chandra",
-    "Ruby_Sunday",
-    "Conrad_Clark",
-    "Shreek",
-    "Jordan_Lang",
-    "Carla_Sunday",
-    "Cherry_Sunday",
-    "Louise_Miller",
-    "Elsa_(Lucky_Day)",
-    "Sparky_(Lucky_Day)",
-    "Jack_(Lucky_Day)",
-    "Michelle_(Lucky_Day)",
-    "Alfie_(Lucky_Day)",
-    "Derek_(Lucky_Day)",
-    "Kate_Stewart",
-    "Christofer_Ibrahim",
-    "Audrey_(Lucky_Day)",
-    "Shirley_Bingham",
-    "Trinity_Wells",
-    "Reeta_Chakrabarti_(in-universe)",
-    "Joel_Dommett_(in-universe)",
-    "Alex_Jones_(in-universe)",
-    "Influencer_1_(in-universe)",
-    "Influencer_2_(in-universe)",
-    "Influencer_3_(in-universe)",
-    "The_Vlinx",
-    "Mrs_Flood"
+    "Omo_Esosa",
+    "The_Barber",
+    "Rashid_Abubakar",
+    "Tunde_Adebayo",
+    "Obioma_Okoli",
+    "Abena_(The_Story_%26_the_Engine)",
+    "Paramedic_(The_Story_%26_the_Engine)",
+    "Consultant_(The_Story_%26_the_Engine)",
+    "Patient_(The_Story_%26_the_Engine)",
+    "Mrs_Flood",
+    "Market_seller_(The_Story_%26_the_Engine)",
+    "Security_guard_(The_Story_%26_the_Engine)",
+    "Poppy_(Space_Babies)",
+    "Fugitive_Doctor"
     ])
 
 print("Done")

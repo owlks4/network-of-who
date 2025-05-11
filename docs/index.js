@@ -1,6 +1,6 @@
 let character_names_blacklist = ["Dalek","Daleks","Cyberman","Cybermen","Cyber-Leader","Major","Silurian","Sontaran","Sea Devil","Judoon","Slitheen","Zygon","Ice Warrior","Auton","Weeping Angel","Ood","Silas Carson","Roy_Skelton","Major"]
 
-let optional_doctor_blacklist = ["The_Doctor","First_Doctor","Second_Doctor","Third_Doctor","Fourth_Doctor","Fifth_Doctor","Sixth_Doctor","Seventh_Doctor","Eighth_Doctor","War_Doctor","Ninth_Doctor","Tenth_Doctor","Eleventh_Doctor","Twelfth_Doctor","Thirteenth_Doctor","Fugitive_Doctor","Fourteenth_Doctor","Fifteenth_Doctor"]
+let optional_doctor_blacklist = ["First_Doctor","Second_Doctor","Third_Doctor","Fourth_Doctor","Fifth_Doctor","Sixth_Doctor","Seventh_Doctor","Eighth_Doctor","War_Doctor","Ninth_Doctor","Tenth_Doctor","Eleventh_Doctor","Twelfth_Doctor","Thirteenth_Doctor","Fugitive_Doctor","Fourteenth_Doctor","Fifteenth_Doctor"]
 
 let temporary_blacklist = [];
 
@@ -14,7 +14,7 @@ let companion_names = [
 "Melanie_Bush","Ace","Rose_Tyler","Adam_Mitchell","Jack_Harkness",
 "Mickey_Smith","Donna_Noble","Martha_Jones","Wilfred_Mott","Amy_Pond",
 "Rory_Williams","River_Song","Clara_Oswald","Nardole","Bill_Potts",
-"Graham_O'Brien","Yasmin_Khan","Ryan_Sinclair","Dan_Lewis","Ruby_Sunday"
+"Graham_O'Brien","Yasmin_Khan","Ryan_Sinclair","Dan_Lewis","Ruby_Sunday","Belinda_Chandra"
 ]
 
 function decodeName(input){
@@ -179,32 +179,44 @@ document.getElementById("randomise-B").onclick = () => {
 };
 
 document.getElementById("dotd-disclaimer").onclick = ()=>{
-  alert("Why aren't the classic Doctors counted as being in The Day of the Doctor?\n\nAnswer: When included, the classic cameos in DOTD have an unjustifiably large impact on the connections web for what is really just a stock footage appearance, even if it's supposed to be unique from a story point of view.\n\nThere are plenty of other tentpole connections, like Ian in Power of the Doctor, and it'd be a shame if they never had the opportunity to be used!\n\nThe same decision was made with the Brig's voice cameo in Flux. I kept the Fourth Doctor in The Five Doctors because those clips WERE effectively a new 4/Romana scene on broadcast, even though they were filmed as part of Shada.")
+  alert("Why aren't the classic Doctors counted as being in The Day of the Doctor?\n\nAnswer: When included, the classic cameos in DOTD have an unjustifiably large impact on the connections web for what is really just a stock footage appearance, even if it's supposed to be unique from a story point of view.\n\nThere are plenty of other tentpole connections, like Ian in Power of the Doctor, and multi-doctor episodes that had the characters interacting at length, and it'd be a shame if they never had the opportunity to be used because DOTD was soaking up all the connections!")
 }
 
 document.getElementById("longest-connection-info").onclick = ()=>{
   alert("When you exclude the Doctor, I think the longest connection between any two characters is 8, from:\n\n• Any character exclusive to Class who was NOT in 'For Tonight we Might Die' (e.g. Dorothea Ames)\n\nTO\n\n• Any character who only appeared in 'The Deadly Assassin' (e.g. Spandrell)\n\nAnother good shout is Mission to the Unknown, but it tends to have a slightly lower score due to some easy New Who connections to the 60s, like Ian Chesterton.\n\nWhen including the Doctor, Mission to the Unknown is probably your best bet. As of writing this, you can even get 5th degree, Doctor-inclusive connections between Mission to the Unknown and Joy to the World, though I imagine that will change as the Fifteenth Doctor becomes better-connected.")
 }
 
-async function start(){
-  const response = await fetch("charmap.json");
-  charmap = await response.json();
-  establishAutocomplete(charaA, charmap.characters);
-  establishAutocomplete(charaB, charmap.characters);
+function getAllRecurringCharacterIDs(){
+  return charmap.characters.filter((chr) => chr.episodes.length > 1).map((x)=>get_char_ID_by_name(x.name))
+}
 
-  return;
-  
-  document.getElementById("blacklist-the-doctor").checked = true;
-  let svgParent = document.getElementById("svg-parent");
-  svgParent.style= "";
-  svgParent.appendChild(
-    makeD3Chart(
-      get_char_ID_by_name("Susan_Foreman"),
-      companion_names.map((x)=>{return get_char_ID_by_name(x)}),
-      true
-      )
-  );
-  svgParent.scrollTo(svgParent.scrollWidth / 2, svgParent.scrollHeight / 2);
+function getAllDoctorIDs(){
+  return optional_doctor_blacklist.map((x)=>{return get_char_ID_by_name(x)});
+}
+
+function getAllCompanionIDs(){
+  return companion_names.map((x)=>{return get_char_ID_by_name(x)});
+}
+
+function getCharacterIDWithTheMostUniqueConnections(charIDs){
+  let best = {episodes:[]}
+  let best_num = 0;
+  for (let i = 0; i < charIDs.length; i++){
+    let chara = charmap.characters[charIDs[i]];
+    let seen_chars = [];
+    chara.episodes.forEach(episodeId => {
+      charmap.episodes[episodeId].chars.forEach(otherChar => {
+        if (!seen_chars.includes(otherChar)){
+          seen_chars.push(otherChar);
+        }
+      });
+    });
+    if (seen_chars.length > best_num){
+      best = chara;
+      best_num = seen_chars.length;
+    }
+  }
+  return get_char_ID_by_name(best.name)
 }
 
 let drag = (simulation) => {
@@ -450,17 +462,17 @@ function getColourForEpWithId(id){
 
     switch(year.substring(0,3)){
         case "196":
-          return "cyan";
+          return "PowderBlue";
         case "197":
-          return "limegreen";
+          return "GreenYellow";
         case "198":
-          return "yellow";
+          return "Khaki";
         case "200":
-          return "orange"
+          return "LightSalmon"
         case "201":
-          return "red";
+          return "PaleVioletRed";
         case "202":
-          return "magenta";
+          return "Violet";
         default:
           return "white";
     }
@@ -517,8 +529,6 @@ function makeD3Chart(id_of_starting_person, whitelist, use_whitelist){
       episode_objs_by_id[String(epId)] = ep_obj;
     }
 
-    console.log(char_obj.name + " " + ep_obj.name)
-
     if (!ep_obj.children.includes(char_obj)){
       ep_obj.children.push(char_obj)
     }
@@ -556,7 +566,7 @@ function makeD3Chart(id_of_starting_person, whitelist, use_whitelist){
 
     const simulation = d3.forceSimulation(nodes)
         .force("link", d3.forceLink(links).id(d => d.id).distance(0).strength(1))
-        .force("charge", d3.forceManyBody().strength(-6000))
+        .force("charge", d3.forceManyBody().strength(-3600))
         .force("x", d3.forceX())
         .force("y", d3.forceY());
   
@@ -565,7 +575,7 @@ function makeD3Chart(id_of_starting_person, whitelist, use_whitelist){
         .attr("width", width)
         .attr("height", height)
         .attr("viewBox", [-width / 2, -height / 2, width, height])
-        .attr("style", "font-size:1.5em;font-weight:bold;");
+        .attr("style", "font-size:1.2em;font-weight:bold;");
   
     // Append links.
     const link = svg.append("g")
@@ -584,13 +594,13 @@ function makeD3Chart(id_of_starting_person, whitelist, use_whitelist){
     .call(drag(simulation));
 
   node.append("circle")
-    .attr("r", 10)
+    .attr("r", 6)
     .attr("fill", (d)=>{return d.data.isEp ? "white" : "black"})
     .attr("stroke", (d)=>{return d.data.isEp ? "black" : "white"});
   
   node.append("text")
     .text(d => {let removeParenttheses = d.data.name.split("(")[0]; return removeParenttheses.includes(" ") ? removeParenttheses.split(" ")[0] : "";})
-    .attr("transform", (d) => `translate(${0} ${-50})`)
+    .attr("transform", (d) => `translate(${0} ${-32})`)
     .attr("style", (d)=>"white-space:break-spaces; user-select:none;text-transform:"+(d.data.isEp ? "uppercase" : "inherit"))
     .attr("fill", "black")
     .attr("stroke", "white")
@@ -598,7 +608,7 @@ function makeD3Chart(id_of_starting_person, whitelist, use_whitelist){
 
   node.append("text")
     .text(d => {let removeParenttheses = d.data.name.split("(")[0]; return removeParenttheses.substring(d.data.name.indexOf(' ')+1)})
-    .attr("transform", (d) => `translate(${0} ${-25})`)
+    .attr("transform", (d) => `translate(${0} ${-16})`)
     .attr("style", (d)=>"white-space:break-spaces; user-select:none;text-transform:"+(d.data.isEp ? "uppercase" : "inherit"))
     .attr("fill", "black")
     .attr("stroke", "white")
@@ -658,6 +668,27 @@ function makeD3Chart(id_of_starting_person, whitelist, use_whitelist){
       node.attr("transform", (d) => `translate(${d.x} ${d.y})`);
     });
     return svg.node();
+}
+
+async function start(){
+  const response = await fetch("charmap.json");
+  charmap = await response.json();
+  establishAutocomplete(charaA, charmap.characters);
+  establishAutocomplete(charaB, charmap.characters);
+
+  return
+
+  document.getElementById("blacklist-the-doctor").checked = true;
+  let svgParent = document.getElementById("svg-parent");
+  svgParent.style= "";
+  svgParent.appendChild(
+    makeD3Chart(
+      get_char_ID_by_name("Belinda_Chandra"),
+      getAllCompanionIDs(),
+      true
+      )
+  );
+  svgParent.scrollTo(svgParent.scrollWidth / 2, svgParent.scrollHeight / 2);
 }
 
 start();
