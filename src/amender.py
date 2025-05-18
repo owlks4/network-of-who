@@ -62,23 +62,25 @@ def add_episode(episode_name, year, character_names):
 
 print("Processing amendments...")
 
-add_episode("The_Story_%26_the_Engine_(TV_story)", "2025", [
+add_episode("The_Interstellar_Song_Contest_(TV_story)", "2025", [
     "Fifteenth_Doctor",
     "Belinda_Chandra",
-    "Omo_Esosa",
-    "The_Barber",
-    "Rashid_Abubakar",
-    "Tunde_Adebayo",
-    "Obioma_Okoli",
-    "Abena_(The_Story_%26_the_Engine)",
-    "Paramedic_(The_Story_%26_the_Engine)",
-    "Consultant_(The_Story_%26_the_Engine)",
-    "Patient_(The_Story_%26_the_Engine)",
+    "Sabine_(The_Interstellar_Song_Contest)",
+    "Rylan_Clark_(in-universe)",
+    "Runner_(The_Interstellar_Song_Contest)",
+    "Nina_Maxwell",
+    "Wynn_Aura-Kin",
     "Mrs_Flood",
-    "Market_seller_(The_Story_%26_the_Engine)",
-    "Security_guard_(The_Story_%26_the_Engine)",
-    "Poppy_(Space_Babies)",
-    "Fugitive_Doctor"
+    "Gary_Gabbastone",
+    "Mike_Gabbstone",
+    "Kid_(The_Interstellar_Song_Contest)",
+    "Cora_Saint_Bavier",
+    "Len_Kazah",
+    "Liz_Lizardine",
+    "Graham_Norton_(in-universe)",
+    "Jeddy_Kine",
+    "Susan_Foreman",
+    "The_Rani_(The_Interstellar_Song_Contest)"
     ])
 
 print("Done")

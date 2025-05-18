@@ -6,7 +6,14 @@ import json
 import os
 from random import shuffle
 
-FOREVER_BLACKLIST = ["", "mr", "mrs", "miss", "dr", "doctor", "dancer", "piano", "music", "silurian", "sontaran","sea_devil", "karen_gillan", "robot", "dwm_284", "doctor_who_and_the_silurians_uncredited_cast", "chancellor", "lord_president", "roy_skelton", "major", "captain", "brigadier", "professor", "lieutenant", "dalek_operator", "colonel", "commander", "trap_street", "covent_garden", "william_hartnell","patrick_troughton","jon_pertwee","tom_baker","peter_davison","colin_baker","sylvester_mccoy","paul_mcgann","john_hurt","christopher_eccleston","david_tennant","matt_smith","peter_capaldi","jodie_whittaker","jo_martin","ncuti_gatwa", "gabriel_woolf", "nicholas_briggs", "paul_kasey"] #some items I was having trouble with due to non-standard listing in the cast list, often due to being voice roles or 'introducing...'
+FOREVER_BLACKLIST = [ #some items I was having trouble with due to non-standard listing in the cast list, often due to being voice roles or 'introducing...'
+    "", "mr", "mrs", "miss", "dr", "doctor", "dancer", "piano", "music", "silurian", "sontaran","sea_devil", "karen_gillan",
+    "robot", "dwm_284", "doctor_who_and_the_silurians_uncredited_cast", "chancellor", "lord_president", "roy_skelton", "major",
+    "captain", "brigadier", "professor", "lieutenant", "dalek_operator", "colonel", "commander", "trap_street", "covent_garden",
+    "william_hartnell","patrick_troughton","jon_pertwee","tom_baker","peter_davison","colin_baker","sylvester_mccoy",
+    "paul_mcgann","john_hurt","christopher_eccleston","david_tennant","matt_smith","peter_capaldi","jodie_whittaker",
+    "jo_martin","ncuti_gatwa", "gabriel_woolf", "nicholas_briggs", "paul_kasey","dalek","daleks","cyberman","cybermen",
+    "cyber-leader","silurian","sontaran","sea_devil","judoon","slitheen","zygon","ice_warrior","auton","weeping_angel","ood"] 
 
 OUTPUT_PATH = "charmap.json"
 WEB_OUTPUT_PATH = "../docs/charmap.json"
@@ -184,6 +191,8 @@ for episode in episode_links:
         if "The_General" in cast:
             cast.remove("The_General")
             cast.append("Eleventh_General")
+    elif "the_interstellar_song_contest" in episode_lower:
+        cast.extend(["Susan_Foreman", "The_Rani_(The_Interstellar_Song_Contest)"])
     elif episode_lower.split("_")[0] == "midnight":
         cast.append("Midnight_Entity")
     elif "the_power_of_the_doctor" in episode_lower:

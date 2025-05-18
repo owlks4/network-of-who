@@ -1,4 +1,4 @@
-let character_names_blacklist = ["Dalek","Daleks","Cyberman","Cybermen","Cyber-Leader","Major","Silurian","Sontaran","Sea Devil","Judoon","Slitheen","Zygon","Ice Warrior","Auton","Weeping Angel","Ood","Silas Carson","Roy_Skelton","Major"]
+let character_names_blacklist = ["Dalek","Daleks","Cyberman","Cybermen","Cyber-Leader","Major","Silurian","Sontaran","Sea Devil","Judoon","Slitheen","Zygon","Ice Warrior","Auton","Weeping Angel","Ood","Silas Carson","Roy_Skelton"]
 
 let optional_doctor_blacklist = ["First_Doctor","Second_Doctor","Third_Doctor","Fourth_Doctor","Fifth_Doctor","Sixth_Doctor","Seventh_Doctor","Eighth_Doctor","War_Doctor","Ninth_Doctor","Tenth_Doctor","Eleventh_Doctor","Twelfth_Doctor","Thirteenth_Doctor","Fugitive_Doctor","Fourteenth_Doctor","Fifteenth_Doctor"]
 
