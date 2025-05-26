@@ -21,9 +21,9 @@ function decodeName(input){
   return decodeURIComponent(input).replaceAll("_"," ").trim();  
 }
 
-function displayName(input, italic){
+function displayName(input, italic, title){
     let tagName = italic ? "em" : "strong";
-    return "<"+tagName+" class='nowrap'>"+decodeName(input)+"</"+tagName+">"
+    return "<"+tagName+" class='nowrap'"+(title == null ? "" : "title='"+title+"'")+">"+decodeName(input)+"</"+tagName+">"
 }
 
 function trim_story_url(input){
@@ -41,6 +41,10 @@ function isVowel(letter){
   }
 }
 
+function getNumAppearancesAsString(chara){
+  return chara.episodes.length + (chara.episodes.length == 1 ? " appearance" : " appearances")
+}
+
 function get_verbose_report(connection){
   let characters = charmap.characters;  
   let episodes = charmap.episodes;
@@ -55,22 +59,25 @@ function get_verbose_report(connection){
     return "<strong>Unable to connect those characters.</strong><br/><br/><strong>Reason:</strong> At least one of the characters could not be identified.<br><br>Have you checked the autocomplete results to make sure you've formatted their name as expected?";
   }
 
+  let startChara = characters[connection["start"]];  
+  let endChara = characters[connection["end"]];  
+
   if (path == null){
-    return displayName(characters[connection["start"]]["name"], false) + " could not be connected to " + displayName(characters[connection["end"]]["name"], false) +".";
+    return displayName(startChara["name"], false, getNumAppearancesAsString(startChara)) + " could not be connected to " + displayName(endChara["name"], getNumAppearancesAsString(endChara), false) +".";
   }
-  
-  let endName = characters[connection["end"]]["name"];
 
   let output = document.getElementById("blacklist-the-doctor").checked ? "Without using the Doctor, " : "";
   
-  output += displayName(characters[connection["start"]]["name"],false) + " has "+ (isVowel(endName[0]) ? "an " :"a ") + displayName(endName,false) +" score of " + String(connection["score"]) +".<br/><br/>"
+  output += displayName(startChara["name"],false,getNumAppearancesAsString(startChara)) + " has "+ (isVowel(endChara["name"][0]) ? "an " :"a ") + displayName(endChara["name"],false,getNumAppearancesAsString(endChara)) +" score of " + String(connection["score"]) +".<br/><br/>"
   
-  output += displayName(characters[connection["start"]]["name"]) +" was in "
+  output += displayName(startChara["name"], false, getNumAppearancesAsString(startChara)) +" was in "
 
   
 for (let i = 0; i < path.length; i++){
     let point = path[i];
-    output += displayName(trim_story_url(episodes[point["ep"]]["episode"]),true) + " with " + displayName(characters[point["chr"]]["name"], false)
+    let ep = episodes[point["ep"]];
+    let chara = characters[point["chr"]];
+    output += displayName(trim_story_url(ep["episode"]),true, "aired "+ep["y"]) + " with " + displayName(chara["name"], false, getNumAppearancesAsString(chara))
     if (i < path.length - 1){
       output += ", who was in "
     } 
@@ -178,12 +185,8 @@ document.getElementById("randomise-B").onclick = () => {
   charaB.value = decodeName(charmap.characters[getRandomInt(charmap.characters.length)].name);
 };
 
-document.getElementById("dotd-disclaimer").onclick = ()=>{
-  alert("Why aren't the classic Doctors counted as being in The Day of the Doctor?\n\nAnswer: When included, the classic cameos in DOTD have an unjustifiably large impact on the connections web for what is really just a stock footage appearance, even if it's supposed to be unique from a story point of view.\n\nThere are plenty of other tentpole connections, like Ian in Power of the Doctor, and multi-doctor episodes that had the characters interacting at length, and it'd be a shame if they never had the opportunity to be used because DOTD was soaking up all the connections!")
-}
-
 document.getElementById("longest-connection-info").onclick = ()=>{
-  alert("When you exclude the Doctor, I think the longest connection between any two characters is 8, from:\n\n• Any character exclusive to Class who was NOT in 'For Tonight we Might Die' (e.g. Dorothea Ames)\n\nTO\n\n• Any character who only appeared in 'The Deadly Assassin' (e.g. Spandrell)\n\nAnother good shout is Mission to the Unknown, but it tends to have a slightly lower score due to some easy New Who connections to the 60s, like Ian Chesterton.\n\nWhen including the Doctor, Mission to the Unknown is probably your best bet. As of writing this, you can even get 5th degree, Doctor-inclusive connections between Mission to the Unknown and Joy to the World, though I imagine that will change as the Fifteenth Doctor becomes better-connected.")
+  alert("When you exclude the Doctor, I think the longest connection between any two characters is 8, from:\n\n• Any character exclusive to Class who was NOT in 'For Tonight we Might Die' (e.g. Dorothea Ames)\n\nTO\n\n• Any character who only appeared in 'The Deadly Assassin' (e.g. Spandrell)\n\nAnother good shout is Mission to the Unknown, but it tends to have a slightly lower score due to some easy New Who connections to the 60s, like Ian Chesterton.\n\nWhen including the Doctor, Mission to the Unknown is probably your best bet. As of writing this, you can even get 5th degree, Doctor-inclusive connections between Mission to the Unknown and Joy to the World, though I imagine that could change as the Fifteenth Doctor becomes better-connected.\n\nIf excluding the Doctor, you can technically get an answer of infinity using Albert Einstein, because the only way out of 'Death is the Only Answer' is through the Eleventh Doctor.")
 }
 
 function getAllRecurringCharacterIDs(){
@@ -685,7 +688,7 @@ async function start(){
     makeD3Chart(
       get_char_ID_by_name("Belinda_Chandra"),
       getAllCompanionIDs(),
-      true
+      false
       )
   );
   svgParent.scrollTo(svgParent.scrollWidth / 2, svgParent.scrollHeight / 2);

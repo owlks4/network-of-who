@@ -142,23 +142,25 @@ def process_characters(cast, episode_id):
         char = char.replace("&action=edit","").replace("&redlink=1","")
         if char == "Kate_Lethbridge-Stewart":
             char = "Kate_Stewart"
-        if char == "Jo_Jones":
+        elif char == "It_Has_No_Name":
+            char = "Midnight_Entity"
+        elif char == "Jo_Jones":
             char = "Jo_Grant"
-        if char == "Mel_Bush":
+        elif char == "Mel_Bush":
             char = "Melanie_Bush"
-        if char.lower() == "flood_(the_church_on_ruby_road)":
-            char = "Mrs Flood"
-        if char == "Tegan":
+        elif char.lower() == "flood_(the_church_on_ruby_road)":
+            char = "Mrs_Flood"
+        elif char == "Tegan":
             char = "Tegan_Jovanka"
-        if char == "Turlough":
+        elif char == "Turlough":
             char = "Vislor_Turlough"
-        if char == "Victoria":
+        elif char == "Victoria":
             char = "Queen_Victoria"
-        if char == "Brigadier_Lethbridge-Stewart" or char == "Alastair_Lethbridge-Stewart":
+        elif char == "Brigadier_Lethbridge-Stewart" or char == "Alastair_Lethbridge-Stewart":
             char = "Alistair_Gordon_Lethbridge-Stewart"
-        if char == "K9_Mark_I" or char == "K9_Mark_II" or char == "K9_Mark_III" or char == "K9_Mark_IV": #it's already a bit inconsistent so I might as well make them all the same. He basically is the same character every time anyway.
+        elif char == "K9_Mark_I" or char == "K9_Mark_II" or char == "K9_Mark_III" or char == "K9_Mark_IV": #it's already a bit inconsistent so I might as well make them all the same. He basically is the same character every time anyway.
             char = "K9"
-        if char == "R":
+        elif char == "R":
             char = "R/T Soldier"
         char_lower = char.lower()
         match = None
@@ -183,17 +185,15 @@ for episode in episode_links:
     cast = ep_obj["cast"]
     episode_lower = episode.lower()
     if "the_day_of_the_doctor" in episode_lower:
-        cast.extend(["The_Curator_(The_Day_of_the_Doctor)","War_Doctor","Tenth_Doctor","Eleventh_Doctor","Twelfth_Doctor"]) #after much debate I've decided not to include the classic doctors in DOTD - it's a good enough connection node as it is without pretending that the cameos really amount to those characters being present! I doubt it will actually harm many scores, and will lead to more satisfying connection paths than 'Third Doctor was in Day of the Doctor' when his appearance is so fleeting and solely using archive footage.
+        cast.extend(["The_Curator_(The_Day_of_the_Doctor)","First_Doctor", "Second_Doctor", "Third_Doctor", "Fourth_Doctor", "Fifth_Doctor", "Sixth_Doctor", "Seventh_Doctor", "Eighth_Doctor", "War_Doctor", "Ninth_Doctor", "Tenth_Doctor","Eleventh_Doctor","Twelfth_Doctor"]) 
         cast.remove("The_Doctor")
-        if "First_Doctor" in cast: # From John Guilor's voice credit as the first doctor. As discussed above I don't really think this should be included as an appearance of the first doctor because it's so fleeting and cameo-like, even if it's supposed to be a novel appearance.
-            cast.remove("First_Doctor")
     elif "the_time_of_the_doctor" in episode_lower:
         if "The_General" in cast:
             cast.remove("The_General")
             cast.append("Eleventh_General")
     elif "the_interstellar_song_contest" in episode_lower:
         cast.extend(["Susan_Foreman", "The_Rani_(The_Interstellar_Song_Contest)"])
-    elif episode_lower.split("_")[0] == "midnight":
+    elif episode_lower.replace("_(tv_story)","") == "midnight":
         cast.append("Midnight_Entity")
     elif "the_power_of_the_doctor" in episode_lower:
         cast.extend(["Guardians_of_the_Edge","Thirteenth_Doctor"])
