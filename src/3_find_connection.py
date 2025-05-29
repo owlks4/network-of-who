@@ -13,7 +13,7 @@ blacklist.extend(FOREVER_BLACKLIST)
 
 data = json.loads(open("charmap.json", mode="r", encoding="utf-8").read())
 
-episodes = data["episodes"]
+episodes = data["eps"]
 characters = data["characters"]
 
 verbose = False
@@ -42,7 +42,7 @@ for blacklisted_ID in blacklist:
 def get_episode_by_name(name):
     name = fix_name(trim_story_url(name))
     for episode in episodes:
-        if fix_name(trim_story_url(episode["episode"])) == name:
+        if fix_name(trim_story_url(episode["ep"])) == name:
             return episode
     return None
 
@@ -54,10 +54,10 @@ def trim_story_url(input):
 
 def print_episodes_for_character(chara):
     print("\n"+fix_name(chara["name"])+"'s episodes:\n")
-    print(list(map(lambda x : episodes[x]["episode"], chara["episodes"])))
+    print(list(map(lambda x : episodes[x]["ep"], chara["eps"])))
 
 def print_characters_for_episode(episode):
-    print("\n"+fix_name(trim_story_url(episode["episode"]))+"'s characters:\n")
+    print("\n"+fix_name(trim_story_url(episode["ep"]))+"'s characters:\n")
     print(list(map(lambda x : characters[x]["name"], episode["chars"])))
 
 def get_report(connection):
@@ -75,7 +75,7 @@ def get_verbose_report(connection):
 
     i = 0
     for point in path:
-        output += trim_story_url(fix_name(episodes[point["ep"]]["episode"])) + " with " + fix_name(characters[point["chr"]]["name"])
+        output += trim_story_url(fix_name(episodes[point["ep"]]["ep"])) + " with " + fix_name(characters[point["chr"]]["name"])
         i += 1
         if i < len(path):
             output += ", who was in "
@@ -95,7 +95,7 @@ for episode in episodes:
     available_chars_in_episode = get_chars_in_episode_once_blacklist_removed(episode)
     if len(available_chars_in_episode) == 1:
         the_only_character = available_chars_in_episode[0]
-        if len(characters[the_only_character]["episodes"]) == 1:            
+        if len(characters[the_only_character]["eps"]) == 1:            
             unreachable_characters.append(the_only_character)
 
 print("Unreachable characters (starring only in one episode and are the only person in that episode):")
@@ -111,8 +111,8 @@ characters_accessed_when_traversing_the_watched_episode = {}
 total_num_connections_completed = 0
 
 def get_episode_ID_in_common(c1, c2):
-    for episode in characters[c1]["episodes"]:
-        for other_episode in characters[c2]["episodes"]:
+    for episode in characters[c1]["eps"]:
+        for other_episode in characters[c2]["eps"]:
             if episode == other_episode:
                 return episode
     return None
@@ -125,7 +125,7 @@ def find_connection_BFS(start,end):
     if start == end:
         if verbose:
             print("Start and end are the same person")
-        return {"start":start,"end":end,"score":0,"path":[{"ep":characters[start]["episodes"][0], "chr":start}]}
+        return {"start":start,"end":end,"score":0,"path":[{"ep":characters[start]["eps"][0], "chr":start}]}
 
     if start in blacklist:
         print("Intended start point '"+characters[start]["name"]+"' was in blacklist; will skip.")
@@ -153,8 +153,8 @@ def find_connection_BFS(start,end):
         if verbose:
             print("Expanding "+characters[node]["name"])
 
-        for episode in characters[node]["episodes"]:
-            #print("Looking at episode "+episodes[episode]["episode"])
+        for episode in characters[node]["eps"]:
+            #print("Looking at episode "+episodes[episode]["ep"])
             for c in episodes[episode]["chars"]:
                 if not c in visited and not characters_with_blacklisted_chars_as_none[c] == None:
                     prevs[str(c)] = node
@@ -208,7 +208,7 @@ def find_connection_BFS(start,end):
         p.append({"ep":ep_id, "chr":char_id})
 
         score += 1
-        output = " was in " + trim_story_url(fix_name(episodes[ep_id]["episode"])) + " with " + fix_name(characters[char_id]["name"]) + ("" if first_time else ", who") + output
+        output = " was in " + trim_story_url(fix_name(episodes[ep_id]["ep"])) + " with " + fix_name(characters[char_id]["name"]) + ("" if first_time else ", who") + output
         first_time = False
         char_id = prev
 
@@ -265,15 +265,15 @@ def make_average_score_csv():
         chara = characters[i]
         print("Looking at "+chara["name"])
         
-        if len(chara["episodes"]) == 1:
-            the_only_ep = chara["episodes"][0]
+        if len(chara["eps"]) == 1:
+            the_only_ep = chara["eps"][0]
             if str(the_only_ep) in avg_for_character_in_episode_if_they_are_unique_to_that_episode.keys(): #then grab it from the cache
                 d[str(i)] = avg = avg_for_character_in_episode_if_they_are_unique_to_that_episode[str(the_only_ep)]
                 print("Using the cache")
                 count = -1 #and set this to -1 so that we know not to perform the loop
 
         if not count == -1:
-            if sorted(chara["episodes"]) == episodes_of_prev: #if the episodes that this character is in is exactly the same as the previous character, just use the previous average
+            if sorted(chara["eps"]) == episodes_of_prev: #if the episodes that this character is in is exactly the same as the previous character, just use the previous average
                 avg = avg_of_prev
             else:
                 for j in range(len(characters)):
@@ -290,11 +290,11 @@ def make_average_score_csv():
                     avg = -1
             d[str(i)] = avg
             if not avg_of_prev == avg: #if we didn't calculate the avg from avg_of_prev, then clearly, the episodes for this character were different to that of the prev, so we need to update episodes_of_prev with a new value
-                episodes_of_prev = sorted(chara["episodes"])
+                episodes_of_prev = sorted(chara["eps"])
             avg_of_prev = avg
             
-            if len(chara["episodes"]) == 1: #if this is true and yet we still got here, via the actual calculation loop, it's clear that the episode didn't have a key in the cache, so we make one now.
-                avg_for_character_in_episode_if_they_are_unique_to_that_episode[str(chara["episodes"][0])] = avg
+            if len(chara["eps"]) == 1: #if this is true and yet we still got here, via the actual calculation loop, it's clear that the episode didn't have a key in the cache, so we make one now.
+                avg_for_character_in_episode_if_they_are_unique_to_that_episode[str(chara["eps"][0])] = avg
 
         open("average_distance_per_character.csv", mode="w+", encoding="utf-8").write("\n".join(list(map(lambda key : '"'+fix_name(characters[int(key)]["name"])+'",'+str(d[key]), d.keys()))))
 
@@ -334,12 +334,12 @@ def test_every_other_connection_from_character(id):
 
 def print_stats():
     print("\nTop 100 most traversed episodes after "+str(total_num_connections_completed)+" successful connections:\n")
-    print(list(map(lambda x : trim_story_url(fix_name(episodes[int(x)]["episode"])) + ": " + str(episodes_and_traversals[x]), sorted(episodes_and_traversals, reverse=True, key = lambda x : episodes_and_traversals[x])))[:100 if total_num_connections_completed >= 100 else total_num_connections_completed])
+    print(list(map(lambda x : trim_story_url(fix_name(episodes[int(x)]["ep"])) + ": " + str(episodes_and_traversals[x]), sorted(episodes_and_traversals, reverse=True, key = lambda x : episodes_and_traversals[x])))[:100 if total_num_connections_completed >= 100 else total_num_connections_completed])
 
     print("\nTop 100 most traversed characters after "+str(total_num_connections_completed)+" successful connections:\n")
     print(list(map(lambda x : fix_name(characters[int(x)]["name"]) + ": " + str(characters_and_traversals[x]), sorted(characters_and_traversals, reverse=True, key = lambda x : characters_and_traversals[x])))[:100 if total_num_connections_completed >= 100 else total_num_connections_completed])
 
-    print("\nMost traversed characters when traversing the watched episode ("+trim_story_url(fix_name(episodes[watched_episode_id]["episode"]))+"):")
+    print("\nMost traversed characters when traversing the watched episode ("+trim_story_url(fix_name(episodes[watched_episode_id]["ep"]))+"):")
     print(list(map(lambda x : fix_name(characters[int(x)]["name"]) + ": " + str(characters_accessed_when_traversing_the_watched_episode[x]), sorted(characters_accessed_when_traversing_the_watched_episode, reverse=True, key = lambda x : characters_accessed_when_traversing_the_watched_episode[x])[:100 if len(characters_accessed_when_traversing_the_watched_episode) >= 100 else len(characters_accessed_when_traversing_the_watched_episode)])))
 
 def randomise_start_and_end():

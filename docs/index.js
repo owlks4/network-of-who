@@ -42,12 +42,12 @@ function isVowel(letter){
 }
 
 function getNumAppearancesAsString(chara){
-  return chara.episodes.length + (chara.episodes.length == 1 ? " appearance" : " appearances")
+  return chara.eps.length + (chara.eps.length == 1 ? " appearance" : " appearances")
 }
 
 function get_verbose_report(connection){
   let characters = charmap.characters;  
-  let episodes = charmap.episodes;
+  let eps = charmap.eps;
 
   let path = connection["path"]
 
@@ -75,9 +75,9 @@ function get_verbose_report(connection){
   
 for (let i = 0; i < path.length; i++){
     let point = path[i];
-    let ep = episodes[point["ep"]];
+    let ep = eps[point["ep"]];
     let chara = characters[point["chr"]];
-    output += displayName(trim_story_url(ep["episode"]),true, "aired "+ep["y"]) + " with " + displayName(chara["name"], false, getNumAppearancesAsString(chara))
+    output += displayName(trim_story_url(ep["ep"]),true, "aired "+(ep["y"]+1963)) + " with " + displayName(chara["name"], false, getNumAppearancesAsString(chara))
     if (i < path.length - 1){
       output += ", who was in "
     } 
@@ -190,7 +190,7 @@ document.getElementById("longest-connection-info").onclick = ()=>{
 }
 
 function getAllRecurringCharacterIDs(){
-  return charmap.characters.filter((chr) => chr.episodes.length > 1).map((x)=>get_char_ID_by_name(x.name))
+  return charmap.characters.filter((chr) => chr.eps.length > 1).map((x)=>get_char_ID_by_name(x.name))
 }
 
 function getAllDoctorIDs(){
@@ -202,13 +202,13 @@ function getAllCompanionIDs(){
 }
 
 function getCharacterIDWithTheMostUniqueConnections(charIDs){
-  let best = {episodes:[]}
+  let best = {eps:[]}
   let best_num = 0;
   for (let i = 0; i < charIDs.length; i++){
     let chara = charmap.characters[charIDs[i]];
     let seen_chars = [];
-    chara.episodes.forEach(episodeId => {
-      charmap.episodes[episodeId].chars.forEach(otherChar => {
+    chara.eps.forEach(episodeId => {
+      charmap.eps[episodeId].chars.forEach(otherChar => {
         if (!seen_chars.includes(otherChar)){
           seen_chars.push(otherChar);
         }
@@ -326,7 +326,7 @@ function attemptToFindConnection_BFS(start,end){
     end = decoded[1]
 
     let characters = charmap.characters;  
-    let episodes = charmap.episodes;
+    let eps = charmap.eps;
 
     if (start == -1 || end == -1){
       console.log("Invalid start or end character");
@@ -337,7 +337,7 @@ function attemptToFindConnection_BFS(start,end){
 
     if (start == end){        
         console.log("Start and end are the same person")
-        return {"start":start,"end":end,"score":0,"path":[{"ep":characters[start]["episodes"][0], "chr":start}]}
+        return {"start":start,"end":end,"score":0,"path":[{"ep":characters[start]["eps"][0], "chr":start}]}
     }
 
     if (blacklist.includes(start)){
@@ -369,15 +369,15 @@ function attemptToFindConnection_BFS(start,end){
 
         //console.log("Expanding "+characters[node]["name"])
 
-        for (let i = 0; i < characters[node]["episodes"].length; i++){
-            let episode = characters[node]["episodes"][i]
+        for (let i = 0; i < characters[node]["eps"].length; i++){
+            let episode = characters[node]["eps"][i]
             if (end == -2 && !MST_seen_eps.includes(episode)){
               MST_eps_and_parent_chars[String(episode)] = node;
               MST_seen_eps.push(episode);
             }
-            //print("Looking at episode "+episodes[episode]["episode"])
-            for (let j = 0; j < episodes[episode]["chars"].length; j++){
-                let c = episodes[episode]["chars"][j]
+            //print("Looking at episode "+eps[episode]["ep"])
+            for (let j = 0; j < eps[episode]["chars"].length; j++){
+                let c = eps[episode]["chars"][j]
                 if (!visited.includes(c) && !blacklist.includes(c)){
                   if (end == -2 && !blacklist.includes(c)){
                     MST_chars_and_parent_eps[String(c)] = episode;
@@ -425,7 +425,7 @@ function attemptToFindConnection_BFS(start,end){
         p.push({"ep":ep_id, "chr":char_id})
 
         score += 1
-        output = " was in " + trim_story_url(decodeName(episodes[ep_id]["episode"])) + " with " + decodeName(characters[char_id]["name"]) + (first_time ? "" : ", who") + output
+        output = " was in " + trim_story_url(decodeName(eps[ep_id]["ep"])) + " with " + decodeName(characters[char_id]["name"]) + (first_time ? "" : ", who") + output
         first_time = false
         char_id = prev
     }
@@ -441,10 +441,10 @@ function attemptToFindConnection_BFS(start,end){
 }
 
 function get_episode_ID_in_common(c1, c2){
-  for (let i = 0; i < charmap.characters[c1]["episodes"].length; i++){
-    let episode = charmap.characters[c1]["episodes"][i];
-    for (let j = 0; j < charmap.characters[c2]["episodes"].length; j++){
-      let other_episode = charmap.characters[c2]["episodes"][j];
+  for (let i = 0; i < charmap.characters[c1]["eps"].length; i++){
+    let episode = charmap.characters[c1]["eps"][i];
+    for (let j = 0; j < charmap.characters[c2]["eps"].length; j++){
+      let other_episode = charmap.characters[c2]["eps"][j];
       if (episode == other_episode){
         return episode;
       }
@@ -455,7 +455,7 @@ function get_episode_ID_in_common(c1, c2){
 
 function getColourForEpWithId(id){
   
-    let episode = charmap.episodes[id];
+    let episode = charmap.eps[id];
 
     let year = episode["y"];
 
@@ -528,7 +528,7 @@ function makeD3Chart(id_of_starting_person, whitelist, use_whitelist){
       ep_obj = episode_objs_by_id[String(epId)];
     } else {
       seen_eps.push(epId)
-      ep_obj = {name: decodeName(charmap.episodes[epId].episode), id:epId, isEp:true, children:[]}
+      ep_obj = {name: decodeName(charmap.eps[epId].ep), id:epId, isEp:true, children:[]}
       episode_objs_by_id[String(epId)] = ep_obj;
     }
 
@@ -674,8 +674,15 @@ function makeD3Chart(id_of_starting_person, whitelist, use_whitelist){
 }
 
 async function start(){
-  const response = await fetch("charmap.json");
-  charmap = await response.json();
+  const response = await fetch("charmap.zip");
+  const b = await response.blob();
+  const writer = new zip.TextWriter();
+  const zipFileReader = new zip.BlobReader(b);
+  const zipReader = new zip.ZipReader(zipFileReader);
+  const firstEntry = (await zipReader.getEntries()).shift();
+  charmap = JSON.parse(await firstEntry.getData(writer));
+  await zipReader.close();
+
   establishAutocomplete(charaA, charmap.characters);
   establishAutocomplete(charaB, charmap.characters);
 

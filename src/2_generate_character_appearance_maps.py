@@ -5,6 +5,7 @@ import time
 import json
 import os
 from random import shuffle
+import zipfile
 
 FOREVER_BLACKLIST = [ #some items I was having trouble with due to non-standard listing in the cast list, often due to being voice roles or 'introducing...'
     "", "mr", "mrs", "miss", "dr", "doctor", "dancer", "piano", "music", "silurian", "sontaran","sea_devil", "karen_gillan",
@@ -37,7 +38,6 @@ def get_most_recent_tag_of_type(start_point, target_tag_type):
         return None
     return parent[index]
 
-
 def format_release(s):
     return s.replace("/wiki/","").replace("_(releases)","")
 
@@ -63,6 +63,10 @@ def parse_cast_list(episode):
                 formatted_release = format_release(airdate_candidate.get("href"))
                 if len(formatted_release) == 4:
                     airing_year = formatted_release
+                    if airing_year.isnumeric():
+                        airing_year -= 1963
+                    else:
+                        airing_year = -1
                     break
 
         print(airing_year)
@@ -146,6 +150,8 @@ def process_characters(cast, episode_id):
             char = "Midnight_Entity"
         elif char == "Jo_Jones":
             char = "Jo_Grant"
+        elif char == "First_Rani":
+            char = "The_Rani_(Mark_of_the_Rani)"
         elif char == "Mel_Bush":
             char = "Melanie_Bush"
         elif char.lower() == "flood_(the_church_on_ruby_road)":
@@ -169,10 +175,10 @@ def process_characters(cast, episode_id):
                 match = entry
                 break
         if match == None:
-            characters.append({"name":char, "episodes":[episode_id]})
+            characters.append({"name":char, "eps":[episode_id]})
             output.append(len(characters) - 1)
         else:
-            match["episodes"].append(episode_id)
+            match["eps"].append(episode_id)
             output.append(characters.index(match))
             
     return output
@@ -211,12 +217,13 @@ for episode in episode_links:
         cast.remove("Alistair_Gordon_Lethbridge-Stewart")    
     elif "into_the_dalek" in episode_lower:
         cast.append("Rusty_(Into_the_Dalek)")
-    episode_charmaps.append({"episode":episode, "y":ep_obj["year"], "chars":process_characters(list(dict.fromkeys(cast)), episode_links.index(episode))}) #the list(dict.fromkeys()) part is there to remove duplicates in the list (e.g. if a character is repeated twice in the same cast list for whatever reason (e.g. two daleks) we only need to record one instance)    
+    episode_charmaps.append({"ep":episode, "y":ep_obj["year"], "chars":process_characters(list(dict.fromkeys(cast)), episode_links.index(episode))}) #the list(dict.fromkeys()) part is there to remove duplicates in the list (e.g. if a character is repeated twice in the same cast list for whatever reason (e.g. two daleks) we only need to record one instance)    
     print(str(num_complete)+out_of_str)
     num_complete += 1
     time.sleep(1)
 
-json_dump = json.dumps({"episodes":episode_charmaps, "characters":characters})
-
+json_dump = json.dumps({"eps":episode_charmaps, "characters":characters}, separators=(',', ':'))
 open(OUTPUT_PATH, mode="w+", encoding="utf-8").write(json_dump)
-open(WEB_OUTPUT_PATH, mode="w+", encoding="utf-8").write(json_dump)
+
+with zipfile.ZipFile(WEB_OUTPUT_PATH, 'w') as myzip:
+    myzip.write(OUTPUT_PATH, compress_type=zipfile.ZIP_DEFLATED)
