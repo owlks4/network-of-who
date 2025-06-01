@@ -67,9 +67,8 @@ def add_episode(episode_name, year, character_names):
 
 print("Processing amendments...")
 
-add_episode("Wish_World_(TV_story)", 2025, [
-    "Seeker_(Wish_World)",
-    "Drone_Guard"
+add_episode("The_Reality_War_(TV_story)", 2025, [
+    "Sixteenth_Doctor?"
     ])
 
 print("Done")

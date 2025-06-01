@@ -13,11 +13,11 @@ FOREVER_BLACKLIST = [ #some items I was having trouble with due to non-standard 
     "captain", "brigadier", "professor", "lieutenant", "dalek_operator", "colonel", "commander", "trap_street", "covent_garden",
     "william_hartnell","patrick_troughton","jon_pertwee","tom_baker","peter_davison","colin_baker","sylvester_mccoy",
     "paul_mcgann","john_hurt","christopher_eccleston","david_tennant","matt_smith","peter_capaldi","jodie_whittaker",
-    "jo_martin","ncuti_gatwa", "gabriel_woolf", "nicholas_briggs", "paul_kasey","dalek","daleks","cyberman","cybermen",
-    "cyber-leader","silurian","sontaran","sea_devil","judoon","slitheen","zygon","ice_warrior","auton","weeping_angel","ood"] 
+    "jo_martin","ncuti_gatwa", "gabriel_woolf", "nicholas_briggs", "paul_kasey","dalek","daleks","cyberman","cybermen","cyberman_(pete's_world)",
+    "cyber-leader","silurian","sontaran","sea_devil","judoon","slitheen","zygon","ice_warrior","auton","weeping_angel","ood","the_master%27s_aliases","the_master's_aliases"] 
 
 OUTPUT_PATH = "charmap.json"
-WEB_OUTPUT_PATH = "../docs/charmap.json"
+WEB_OUTPUT_PATH = "../docs/charmap.zip"
 
 if os.path.isfile(OUTPUT_PATH):
     print(OUTPUT_PATH + " already exists. If you really do want to regenerate it, please delete it first, then run this script again. Skipping step 2 for now.")
@@ -64,6 +64,7 @@ def parse_cast_list(episode):
                 if len(formatted_release) == 4:
                     airing_year = formatted_release
                     if airing_year.isnumeric():
+                        airing_year = int(airing_year)
                         airing_year -= 1963
                     else:
                         airing_year = -1
@@ -148,6 +149,14 @@ def process_characters(cast, episode_id):
             char = "Kate_Stewart"
         elif char == "It_Has_No_Name":
             char = "Midnight_Entity"
+        elif char == "Saxon_Master":
+            char = "The_Master_(Harold_Saxon)"
+        elif char == "Decayed_Master":
+            char = "The_Master_(Decayed)"
+        elif char == "War_Master":
+            char = "The_Master_(Yana)"
+        elif char == "Spy_Master":
+            char = "The_Master_(Spyfall)"
         elif char == "Jo_Jones":
             char = "Jo_Grant"
         elif char == "First_Rani":

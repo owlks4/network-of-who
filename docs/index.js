@@ -1,4 +1,4 @@
-let character_names_blacklist = ["Dalek","Daleks","Cyberman","Cybermen","Cyber-Leader","Major","Silurian","Sontaran","Sea Devil","Judoon","Slitheen","Zygon","Ice Warrior","Auton","Weeping Angel","Ood","Silas Carson","Roy_Skelton"]
+let character_names_blacklist = ["Dalek","Daleks","Cyberman","Cyberman_(Pete's_World)","Cybermen","Cyber-Leader","Major","Silurian","Sontaran","Sea Devil","Judoon","Slitheen","Zygon","Ice Warrior","Auton","Weeping Angel","Ood","Silas Carson","Roy_Skelton"]
 
 let optional_doctor_blacklist = ["First_Doctor","Second_Doctor","Third_Doctor","Fourth_Doctor","Fifth_Doctor","Sixth_Doctor","Seventh_Doctor","Eighth_Doctor","War_Doctor","Ninth_Doctor","Tenth_Doctor","Eleventh_Doctor","Twelfth_Doctor","Thirteenth_Doctor","Fugitive_Doctor","Fourteenth_Doctor","Fifteenth_Doctor"]
 
@@ -17,13 +17,20 @@ let companion_names = [
 "Graham_O'Brien","Yasmin_Khan","Ryan_Sinclair","Dan_Lewis","Ruby_Sunday","Belinda_Chandra"
 ]
 
+let isMobileMode = window.innerWidth < window.innerHeight;
+
+if (isMobileMode){
+  document.getElementById("report").style = "padding: 0 0.3em;"
+}
+
 function decodeName(input){
   return decodeURIComponent(input).replaceAll("_"," ").trim();  
 }
 
 function displayName(input, italic, title){
-    let tagName = italic ? "em" : "strong";
-    return "<"+tagName+" class='nowrap'"+(title == null ? "" : "title='"+title+"'")+">"+decodeName(input)+"</"+tagName+">"
+    let tagName = italic ? "em " : "strong ";
+    let nowrap = "class='nowrap'"
+    return "<"+tagName + (italic && !isMobileMode ? nowrap : "") + (title == null ? "" : "title='"+title+"'")+">"+decodeName(input)+"</"+tagName+">"
 }
 
 function trim_story_url(input){
@@ -63,7 +70,7 @@ function get_verbose_report(connection){
   let endChara = characters[connection["end"]];  
 
   if (path == null){
-    return displayName(startChara["name"], false, getNumAppearancesAsString(startChara)) + " could not be connected to " + displayName(endChara["name"], getNumAppearancesAsString(endChara), false) +".";
+    return displayName(startChara["name"], false, getNumAppearancesAsString(startChara)) + " could not be connected to " + displayName(endChara["name"], false, getNumAppearancesAsString(endChara)) +".";
   }
 
   let output = document.getElementById("blacklist-the-doctor").checked ? "Without using the Doctor, " : "";
@@ -185,8 +192,12 @@ document.getElementById("randomise-B").onclick = () => {
   charaB.value = decodeName(charmap.characters[getRandomInt(charmap.characters.length)].name);
 };
 
-document.getElementById("longest-connection-info").onclick = ()=>{
-  alert("When you exclude the Doctor, I think the longest connection between any two characters is 8, from:\n\n• Any character exclusive to Class who was NOT in 'For Tonight we Might Die' (e.g. Dorothea Ames)\n\nTO\n\n• Any character who only appeared in 'The Deadly Assassin' (e.g. Spandrell)\n\nAnother good shout is Mission to the Unknown, but it tends to have a slightly lower score due to some easy New Who connections to the 60s, like Ian Chesterton.\n\nWhen including the Doctor, Mission to the Unknown is probably your best bet. As of writing this, you can even get 5th degree, Doctor-inclusive connections between Mission to the Unknown and Joy to the World, though I imagine that could change as the Fifteenth Doctor becomes better-connected.\n\nIf excluding the Doctor, you can technically get an answer of infinity using Albert Einstein, because the only way out of 'Death is the Only Answer' is through the Eleventh Doctor.")
+let longestConnectionInfo = document.getElementById("longest-connection-info");
+
+if (longestConnectionInfo != null){
+  longestConnectionInfo.onclick = ()=>{
+    alert("When you exclude the Doctor, I think the longest connection between any two characters is 8, from:\n\n• Any character exclusive to Class who was NOT in 'For Tonight we Might Die' (e.g. Dorothea Ames)\n\nTO\n\n• Any character who only appeared in 'The Deadly Assassin' (e.g. Spandrell)\n\nAnother good shout is Mission to the Unknown, but it tends to have a slightly lower score due to some easy New Who connections to the 60s, like Ian Chesterton.\n\nWhen including the Doctor, Mission to the Unknown is probably your best bet. As of writing this, you can even get 5th degree, Doctor-inclusive connections between Mission to the Unknown and Joy to the World, though I imagine that could change as the Fifteenth Doctor becomes better-connected.\n\nIf excluding the Doctor, you can technically get an answer of infinity using Albert Einstein, because the only way out of 'Death is the Only Answer' is through the Eleventh Doctor.")
+  }
 }
 
 function getAllRecurringCharacterIDs(){
