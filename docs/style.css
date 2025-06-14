@@ -39,7 +39,7 @@ input {
   font-size: 16px;
 }
 
-.nowrap {
+.no-wrap {
   text-wrap: nowrap;
 }
 

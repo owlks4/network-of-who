@@ -27,10 +27,12 @@ function decodeName(input){
   return decodeURIComponent(input).replaceAll("_"," ").trim();  
 }
 
+console.log(isMobileMode)
+
 function displayName(input, italic, title){
     let tagName = italic ? "em " : "strong ";
-    let nowrap = "class='nowrap'"
-    return "<"+tagName + (italic && !isMobileMode ? nowrap : "") + (title == null ? "" : "title='"+title+"'")+">"+decodeName(input)+"</"+tagName+">"
+    let nowrap = "class='no-wrap'"
+    return "<"+tagName + ((!isMobileMode || (isMobileMode && !italic)) ? nowrap : "") + (title == null ? "" : "title='"+title+"'")+">"+decodeName(input)+"</"+tagName+">"
 }
 
 function trim_story_url(input){
