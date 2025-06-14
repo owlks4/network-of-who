@@ -468,7 +468,7 @@ function getColourForEpWithId(id){
   
     let episode = charmap.eps[id];
 
-    let year = episode["y"];
+    let year = String(episode["y"] + 1963);
 
     if (year == null){
       return "white";
@@ -685,15 +685,8 @@ function makeD3Chart(id_of_starting_person, whitelist, use_whitelist){
 }
 
 async function start(){
-  const response = await fetch("charmap.zip");
-  const b = await response.blob();
-  const writer = new zip.TextWriter();
-  const zipFileReader = new zip.BlobReader(b);
-  const zipReader = new zip.ZipReader(zipFileReader);
-  const firstEntry = (await zipReader.getEntries()).shift();
-  charmap = JSON.parse(await firstEntry.getData(writer));
-  await zipReader.close();
-
+  const response = await fetch("charmap.json");
+  charmap = await response.json();
   establishAutocomplete(charaA, charmap.characters);
   establishAutocomplete(charaB, charmap.characters);
 
@@ -706,7 +699,7 @@ async function start(){
     makeD3Chart(
       get_char_ID_by_name("Belinda_Chandra"),
       getAllCompanionIDs(),
-      false
+      true
       )
   );
   svgParent.scrollTo(svgParent.scrollWidth / 2, svgParent.scrollHeight / 2);

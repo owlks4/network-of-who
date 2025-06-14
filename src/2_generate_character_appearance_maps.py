@@ -17,7 +17,7 @@ FOREVER_BLACKLIST = [ #some items I was having trouble with due to non-standard 
     "cyber-leader","silurian","sontaran","sea_devil","judoon","slitheen","zygon","ice_warrior","auton","weeping_angel","ood","the_master%27s_aliases","the_master's_aliases"] 
 
 OUTPUT_PATH = "charmap.json"
-WEB_OUTPUT_PATH = "../docs/charmap.zip"
+WEB_OUTPUT_PATH = "../docs/charmap.json"
 
 if os.path.isfile(OUTPUT_PATH):
     print(OUTPUT_PATH + " already exists. If you really do want to regenerate it, please delete it first, then run this script again. Skipping step 2 for now.")
@@ -233,6 +233,4 @@ for episode in episode_links:
 
 json_dump = json.dumps({"eps":episode_charmaps, "characters":characters}, separators=(',', ':'))
 open(OUTPUT_PATH, mode="w+", encoding="utf-8").write(json_dump)
-
-with zipfile.ZipFile(WEB_OUTPUT_PATH, 'w') as myzip:
-    myzip.write(OUTPUT_PATH, compress_type=zipfile.ZIP_DEFLATED)
+open(WEB_OUTPUT_PATH, mode="w+", encoding="utf-8").write(json_dump)
